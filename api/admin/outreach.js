@@ -12,12 +12,14 @@ async function getLeadsByFilters(db, filters = {}) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST" && req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
   if (!isAuthenticated(req)) return res.status(401).json({ error: "Unauthorized" });
 
   const db = getClient();
   const body = req.body || {};
-  const action = req.query?.action || "";
+  // Support both ?action=X and /outreach/X path styles
+  const urlPath = req.url || "";
+  const action = req.query?.action || (urlPath.includes("/draft") ? "draft" : urlPath.includes("/send") ? "send" : "");
 
   try {
     // Draft
