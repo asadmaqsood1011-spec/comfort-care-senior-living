@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Comfort Care Admin | Leads</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2311233a'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='20' fill='%23e7d2a5' font-family='Georgia'%3ECC%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/admin.css">
+  </head>
+  <body class="admin-body">
+    <main class="admin-shell">
+      <section class="admin-login" data-login-panel>
+        <div class="admin-brand">
+          <span class="brand-mark">CC</span>
+          <div>
+            <p class="eyebrow">Secure Admin</p>
+            <h1>Lead Dashboard</h1>
+          </div>
+        </div>
+        <form class="admin-form" data-login-form>
+          <label>Email<input name="email" type="email" required autocomplete="username"></label>
+          <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+          <button class="btn btn-primary" type="submit"><i data-lucide="lock-keyhole"></i>Log In</button>
+          <output class="form-status" aria-live="polite"></output>
+          <p class="privacy">Admin access is password protected. Lead data is shown only after authentication.</p>
+        </form>
+      </section>
+
+      <section class="dashboard" data-dashboard hidden>
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">Comfort Care Senior Living</p>
+            <h1>Submitted Leads</h1>
+          </div>
+          <div class="dashboard-actions">
+            <a class="btn btn-ghost" href="/"><i data-lucide="home"></i>View Site</a>
+            <button class="btn btn-primary" type="button" data-refresh><i data-lucide="refresh-cw"></i>Refresh</button>
+            <button class="btn btn-ghost" type="button" data-logout><i data-lucide="log-out"></i>Log Out</button>
+          </div>
+        </header>
+
+        <div class="metrics">
+          <article><span data-metric-total>0</span><small>Total leads</small></article>
+          <article><span data-metric-new>0</span><small>New</small></article>
+          <article><span data-metric-tour>0</span><small>Tour scheduled</small></article>
+        </div>
+
+        <div class="filters">
+          <label>Search<input data-search placeholder="Name, email, phone, message"></label>
+          <label>Community<select data-filter-community></select></label>
+          <label>Status<select data-filter-status></select></label>
+          <label>Date from<input data-filter-date-from type="date"></label>
+          <label>Date to<input data-filter-date-to type="date"></label>
+          <button class="btn btn-primary export-btn" type="button" data-export>
+            <i data-lucide="download"></i><span data-export-label>Download Leads CSV</span>
+          </button>
+        </div>
+
+        <div class="admin-tools">
+          <article class="admin-tool-card">
+            <div class="tool-heading">
+              <div>
+                <p class="eyebrow">Lead Import</p>
+                <h2>Upload Leads</h2>
+              </div>
+              <i data-lucide="upload-cloud"></i>
+            </div>
+            <p class="tool-copy">Import a CSV with name, phone, email, community, care type, message, and status. Duplicate emails are skipped.</p>
+            <label class="file-picker">CSV file<input data-import-file type="file" accept=".csv,text/csv"></label>
+            <textarea data-import-csv rows="6" placeholder="Paste CSV rows here..."></textarea>
+            <button class="btn btn-primary" type="button" data-import-leads><i data-lucide="database"></i>Upload Leads CSV</button>
+            <output class="tool-status" data-import-status aria-live="polite"></output>
+          </article>
+
+          <article class="admin-tool-card">
+            <div class="tool-heading">
+              <div>
+                <p class="eyebrow">AI Email Outreach</p>
+                <h2>Draft & Test</h2>
+              </div>
+              <i data-lucide="sparkles"></i>
+            </div>
+
+            <label>Community (optional)<select data-draft-community><option value="">All communities</option></select></label>
+            <button class="btn btn-ghost tool-action" type="button" data-draft-email><i data-lucide="wand-sparkles"></i>Generate AI Draft</button>
+            <label>Subject<input data-email-subject placeholder="Email subject"></label>
+            <label>Email body<textarea data-email-body rows="9" placeholder="Generate or write a message..."></textarea></label>
+            <div class="test-send-row">
+              <label>Test recipient<input data-test-recipient type="email" placeholder="you@example.com"></label>
+              <button class="btn btn-primary" type="button" data-send-test-email><i data-lucide="send"></i>Send Test Email</button>
+            </div>
+            <button class="btn btn-ghost tool-action" type="button" data-send-demo-campaign><i data-lucide="mail-check"></i>Log Demo Campaign</button>
+            <button class="btn btn-primary tool-action" type="button" data-send-live-campaign style="background:#c0392b;border-color:#c0392b"><i data-lucide="send"></i>⚡ Send Live Emails to All Leads</button>
+            <output class="tool-status" data-outreach-status aria-live="polite"></output>
+          </article>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Preferred community</th>
+                <th>Care type</th>
+                <th>Message</th>
+                <th>Date submitted</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody data-leads-body></tbody>
+          </table>
+          <p class="empty-state" data-empty hidden>No leads match the current filters.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="/admin.js"></script>
+  </body>
+</html>
