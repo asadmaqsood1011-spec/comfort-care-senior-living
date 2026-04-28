@@ -39,6 +39,9 @@ function initCommunityMap(targetCanvas, targetStage) {
   mapGroup.rotation.z = -0.08;
   mapGroup.scale.setScalar(1.18);
   scene.add(mapGroup);
+  mapGroup.userData.baseRotationX = -0.26;
+  mapGroup.userData.baseRotationZ = -0.08;
+  mapGroup.userData.isMobile = false;
 
   const baseMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x173c35,
@@ -108,15 +111,35 @@ function initCommunityMap(targetCanvas, targetStage) {
     const rect = targetStage.getBoundingClientRect();
     renderer.setSize(rect.width, rect.height, false);
     camera.aspect = rect.width / rect.height;
-    camera.position.z = rect.width < 680 ? 15.8 : 12.8;
-    mapGroup.position.x = rect.width < 760 ? 0.35 : 2.75;
+    const isMobile = rect.width < 680;
+
+    camera.fov = isMobile ? 31 : 38;
+    camera.position.set(0, isMobile ? 11.4 : 8.2, isMobile ? 13.7 : 12.8);
+    camera.lookAt(0, isMobile ? -0.15 : 0, 0);
+
+    mapGroup.userData.isMobile = isMobile;
+    mapGroup.userData.baseRotationX = isMobile ? -0.72 : -0.26;
+    mapGroup.userData.baseRotationZ = isMobile ? -0.04 : -0.08;
+    mapGroup.rotation.x = mapGroup.userData.baseRotationX;
+    mapGroup.rotation.z = mapGroup.userData.baseRotationZ;
+    mapGroup.position.x = rect.width < 760 ? 0 : 2.75;
+    mapGroup.position.y = isMobile ? -0.95 : -0.5;
+    mapGroup.scale.setScalar(isMobile ? 1.22 : 1.18);
+
+    mapGroup.traverse((child) => {
+      if (child.userData.pin) {
+        child.scale.setScalar(isMobile ? 0.58 : 1);
+      }
+    });
+
     camera.updateProjectionMatrix();
   }
 
   function animate() {
     const elapsed = clock.getElapsedTime();
-    mapGroup.rotation.z = -0.08 + Math.sin(elapsed * 0.28) * 0.035 + pointerX * 0.08;
-    mapGroup.rotation.x = -0.26 + pointerY * 0.04;
+    const mobileMotion = mapGroup.userData.isMobile ? 0.45 : 1;
+    mapGroup.rotation.z = mapGroup.userData.baseRotationZ + Math.sin(elapsed * 0.28) * 0.035 * mobileMotion + pointerX * 0.08 * mobileMotion;
+    mapGroup.rotation.x = mapGroup.userData.baseRotationX + pointerY * 0.04 * mobileMotion;
     scene.children.forEach((child) => {
       if (child.userData.isParticleField) {
         child.rotation.y = elapsed * 0.035;
@@ -124,13 +147,15 @@ function initCommunityMap(targetCanvas, targetStage) {
     });
     mapGroup.traverse((child) => {
       if (child.userData.pin) {
-        child.position.y = child.userData.baseY + Math.sin(elapsed * 1.8 + child.userData.phase) * 0.08;
+        const floatHeight = mapGroup.userData.isMobile ? 0.035 : 0.08;
+        child.position.y = child.userData.baseY + Math.sin(elapsed * 1.8 + child.userData.phase) * floatHeight;
         child.rotation.y = elapsed * 0.8;
       }
       if (child.userData.pulse) {
-        const scale = 1 + Math.sin(elapsed * 2 + child.userData.phase) * 0.18;
+        const pulseAmount = mapGroup.userData.isMobile ? 0.1 : 0.18;
+        const scale = 1 + Math.sin(elapsed * 2 + child.userData.phase) * pulseAmount;
         child.scale.setScalar(scale);
-        child.material.opacity = 0.26 + Math.sin(elapsed * 2 + child.userData.phase) * 0.12;
+        child.material.opacity = 0.2 + Math.sin(elapsed * 2 + child.userData.phase) * 0.08;
       }
     });
     renderer.render(scene, camera);

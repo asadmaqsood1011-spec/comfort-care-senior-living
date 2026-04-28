@@ -272,6 +272,7 @@ const lightbox = document.querySelector("[data-lightbox]");
 const lightboxImage = document.querySelector("[data-lightbox-image]");
 const modal = document.querySelector("[data-community-modal]");
 const modalTitle = document.querySelector("[data-modal-title]");
+const counters = document.querySelectorAll("[data-count-to]");
 
 document.addEventListener("DOMContentLoaded", hideLoader);
 window.addEventListener("load", () => {
@@ -323,6 +324,7 @@ bindLeadForms();
 bindModal();
 bindCommunityMapEvents();
 bindQuiz();
+bindCounters();
 renderRoute();
 window.lucide?.createIcons();
 
@@ -727,7 +729,12 @@ function bindLeadForms() {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.errors?.[0] || data.error || "Please check the form and try again.");
-        status.textContent = data.message;
+        status.innerHTML = `
+          <span class="success-check"><i data-lucide="check"></i></span>
+          <strong>Request received.</strong>
+          <small>Our team will follow up soon. Your information is securely stored and never shared.</small>
+        `;
+        window.lucide?.createIcons();
         form.reset();
         if (form.closest("dialog")) setTimeout(() => modal.close(), 1200);
       } catch (error) {
@@ -738,4 +745,30 @@ function bindLeadForms() {
       }
     });
   });
+}
+
+function bindCounters() {
+  if (!counters.length) return;
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting || entry.target.dataset.counted === "true") return;
+      entry.target.dataset.counted = "true";
+      animateCounter(entry.target);
+    });
+  }, { threshold: 0.45 });
+  counters.forEach((counter) => counterObserver.observe(counter));
+}
+
+function animateCounter(counter) {
+  const target = Number(counter.dataset.countTo || 0);
+  const suffix = counter.dataset.countSuffix || "";
+  const duration = target > 1000 ? 1200 : 900;
+  const start = performance.now();
+  const step = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    counter.textContent = `${Math.round(target * eased)}${suffix}`;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }

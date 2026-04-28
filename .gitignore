@@ -3,3 +3,5 @@ data/
 .local-postgres/
 *.log
 node_modules/
+
+.vercel

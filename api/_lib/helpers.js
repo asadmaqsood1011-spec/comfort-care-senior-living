@@ -57,7 +57,8 @@ function personalizeEmail(template, lead) {
     .replaceAll("{{first_name}}", firstName)
     .replaceAll("{{full_name}}", lead.full_name || lead.fullName || "")
     .replaceAll("{{community}}", lead.preferred_community || lead.preferredCommunity || "")
-    .replaceAll("{{care_type}}", lead.care_type || lead.careType || "");
+    .replaceAll("{{care_type}}", lead.care_type || lead.careType || "")
+    .replaceAll("{{lead_message}}", lead.message || "");
 }
 
 async function sendEmail({ to, subject, body }) {

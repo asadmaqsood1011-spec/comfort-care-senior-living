@@ -298,6 +298,36 @@ h3 {
   font-size: clamp(1.06rem, 2vw, 1.3rem);
 }
 
+.hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 760px;
+  margin-top: 24px;
+}
+
+.hero-proof span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.88rem;
+  font-weight: 800;
+  box-shadow: 0 18px 44px rgba(5, 16, 25, 0.13);
+  backdrop-filter: blur(14px);
+}
+
+.hero-proof svg {
+  width: 17px;
+  height: 17px;
+  color: var(--gold-soft);
+}
+
 .hero-actions,
 .footer-links {
   display: flex;
@@ -321,6 +351,20 @@ h3 {
 
 .hero-actions {
   margin-top: 34px;
+}
+
+.hero-assurance {
+  margin: 16px 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.95rem;
+}
+
+.hero-assurance a {
+  color: var(--gold-soft);
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: rgba(231, 210, 165, 0.42);
+  text-underline-offset: 4px;
 }
 
 .btn:hover {
@@ -348,6 +392,42 @@ h3 {
   border: 1px solid rgba(255, 255, 255, 0.45);
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(14px);
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  right: clamp(20px, 5vw, 72px);
+  bottom: 178px;
+  z-index: 5;
+  display: inline-grid;
+  justify-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hero-scroll-hint small {
+  font: inherit;
+}
+
+.hero-scroll-hint span {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 72px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.hero-scroll-hint span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, var(--gold-soft), transparent);
+  animation: scrollTrace 2.8s ease-in-out infinite;
 }
 
 .trust-ribbon {
@@ -425,6 +505,7 @@ h3 {
 
 .band {
   padding: clamp(76px, 10vw, 150px) clamp(20px, 5vw, 72px);
+  position: relative;
 }
 
 .deep {
@@ -432,6 +513,23 @@ h3 {
     radial-gradient(circle at 12% 20%, rgba(189, 149, 87, 0.2), transparent 25%),
     linear-gradient(135deg, var(--navy), var(--green));
   color: var(--white);
+}
+
+.band::before {
+  content: "";
+  position: absolute;
+  top: 34px;
+  left: clamp(20px, 5vw, 72px);
+  width: min(190px, calc(100% - 40px));
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(189, 149, 87, 0.86), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 900ms ease;
+}
+
+.band:has(.is-visible)::before {
+  transform: scaleX(1);
 }
 
 .section-grid {
@@ -723,6 +821,12 @@ h3 {
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
+  transition: transform 520ms ease, filter 520ms ease;
+}
+
+.community-card:hover img {
+  filter: saturate(1.08) contrast(1.04) brightness(0.88);
+  transform: scale(1.055);
 }
 
 .community-body {
@@ -777,6 +881,37 @@ h3 {
 
 .community-card .btn {
   width: 100%;
+}
+
+.counter-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 980px;
+  margin: 0 auto clamp(26px, 4vw, 44px);
+}
+
+.counter-strip article {
+  padding: 18px;
+  border: 1px solid rgba(189, 149, 87, 0.2);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  box-shadow: 0 14px 36px rgba(17, 35, 58, 0.08);
+}
+
+.counter-strip strong {
+  display: block;
+  color: var(--green);
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1;
+}
+
+.counter-strip span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
 }
 
 .community-actions,
@@ -1333,6 +1468,37 @@ textarea:focus {
   font-weight: 800;
 }
 
+.form-status:not(:empty) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(231, 210, 165, 0.26);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  animation: successIn 360ms ease both;
+}
+
+.form-status .success-check {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  grid-row: span 2;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--navy);
+}
+
+.form-status strong {
+  color: var(--white);
+}
+
+.form-status small {
+  color: rgba(255, 255, 255, 0.68);
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;
@@ -1390,6 +1556,14 @@ textarea:focus {
   border-radius: 20px;
   padding: 0;
   background: transparent;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.lightbox[open] {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .lightbox::backdrop {
@@ -1532,6 +1706,18 @@ textarea:focus {
   100% { transform: translateX(120%); }
 }
 
+@keyframes scrollTrace {
+  0% { transform: translateY(-100%); opacity: 0; }
+  25% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes successIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (max-width: 980px) {
   .nav-toggle {
     display: grid;
@@ -1566,6 +1752,7 @@ textarea:focus {
   .community-grid,
   .community-spotlight,
   .included-grid,
+  .counter-strip,
   .route-hero,
   .route-stat-grid,
   .route-content-grid,
@@ -1580,17 +1767,28 @@ textarea:focus {
   }
 
   .community-map-stage {
-    min-height: 620px;
-    align-items: end;
-    padding-bottom: 26px;
+    display: block;
+    min-height: 0;
+    padding: 360px 18px 24px;
+  }
+
+  .community-map-stage canvas,
+  .map-loading {
+    height: 360px;
+    bottom: auto;
   }
 
   .map-glass-panel {
+    width: 100%;
     margin-inline: auto;
   }
 
   .hero-content {
     padding-bottom: 44px;
+  }
+
+  .hero-scroll-hint {
+    display: none;
   }
 
   .community-grid,
@@ -1629,15 +1827,29 @@ textarea:focus {
   }
 
   h1 {
-    font-size: clamp(3.2rem, 17vw, 5.6rem);
+    font-size: clamp(2.9rem, 15vw, 4.8rem);
+  }
+
+  .hero-actions {
+    margin-top: 24px;
   }
 
   .trust-ribbon {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .trust-badge {
     min-height: 78px;
+    padding: 15px 16px;
+  }
+
+  .hero-proof {
+    display: none;
+  }
+
+  .hero-assurance {
+    display: none;
   }
 
   .field-pair,

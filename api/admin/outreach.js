@@ -31,14 +31,35 @@ module.exports = async (req, res) => {
       const careType = mostCommon(leads.map((l) => l.care_type)) || "senior living";
       const targetCommunity = community || mostCommon(leads.map((l) => l.preferred_community)) || "Comfort Care";
 
+      // Build a representative sample lead for the preview
+      const sampleLead = leads[0] || {};
+      const sampleFirstName = clean(sampleLead.full_name || "").split(" ")[0] || "{{first_name}}";
+      const sampleCommunity = sampleLead.preferred_community || targetCommunity;
+      const sampleCareType = sampleLead.care_type || careType;
+      const sampleMessage = sampleLead.message || "";
+
       const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
       if (OPENAI_API_KEY) {
         try {
-          const prompt = `Write a short, warm outreach email for a senior living community called "${targetCommunity}". The email is for leads interested in "${careType}". Use {{first_name}} as the placeholder. Keep it under 150 words. Friendly, empathetic, not salesy. Sign off as "The Comfort Care Team". Return JSON with keys: subject (string) and body (string).`;
+          const prompt = `You write warm, personalized outreach emails for Comfort Care Senior Living. Write one email using these details about the recipient:
+- First name: ${sampleFirstName}
+- Interested community: ${sampleCommunity}
+- Care type: ${sampleCareType}
+- Their message/notes: "${sampleMessage || "none provided"}"
+
+Instructions:
+- Address them by first name
+- Reference their specific community interest and care type naturally
+- If they left a message, acknowledge it briefly and empathetically
+- Keep it under 160 words, warm and human, not salesy
+- Sign off as "The Comfort Care Team"
+- Use {{first_name}}, {{community}}, {{care_type}}, {{lead_message}} as placeholders so it personalizes per recipient
+- Return JSON with keys: subject (string) and body (string)`;
+
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" }, max_tokens: 400 })
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" }, max_tokens: 500 })
           });
           const aiData = await aiRes.json();
           const parsed = JSON.parse(aiData.choices?.[0]?.message?.content || "{}");
@@ -49,7 +70,7 @@ module.exports = async (req, res) => {
       }
 
       const subject = `A personal note from ${targetCommunity}`;
-      const bodyText = `Hi {{first_name}},\n\nI wanted to personally follow up from Comfort Care Senior Living. Based on your interest in ${careType}, our team can help answer questions about care options, transparent pricing, and scheduling a private tour.\n\n${targetCommunity} is designed to feel warm, safe, and home-like.\n\nWould you like to schedule a call or tour?\n\nWarmly,\nThe Comfort Care Team\n\nReply STOP to opt out.`;
+      const bodyText = `Hi {{first_name}},\n\nI wanted to personally follow up from Comfort Care Senior Living. Based on your interest in {{care_type}} at {{community}}, our team can help answer questions about care options, transparent pricing, and scheduling a private tour.\n\n{{community}} is designed to feel warm, safe, and home-like.\n\nWould you like to schedule a call or tour?\n\nWarmly,\nThe Comfort Care Team\n\nReply STOP to opt out.`;
       return res.status(200).json({ subject, body: bodyText, recipients: leads.length, ai: false });
     }
 
@@ -74,10 +95,46 @@ module.exports = async (req, res) => {
 
       const targets = validLeads.slice(0, 50);
       let sent = 0, failed = 0;
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+
       for (const lead of targets) {
-        const personalizedBody = personalizeEmail(emailBody, lead);
-        const result = await sendEmail({ to: lead.email, subject, body: personalizedBody });
-        await db.from("email_outreach").insert({ lead_id: lead.id, recipient_email: lead.email, subject, body: personalizedBody, status: result.status });
+        const firstName = clean(lead.full_name || "").split(" ")[0] || "there";
+        const community = lead.preferred_community || "Comfort Care";
+        const careType = lead.care_type || "senior living";
+        const leadMsg = lead.message || "";
+
+        let finalBody = personalizeEmail(emailBody, lead);
+
+        // If the template uses placeholders only (AI-drafted), and we have OpenAI, generate a unique per-lead email
+        if (OPENAI_API_KEY && emailBody.includes("{{")) {
+          try {
+            const perLeadPrompt = `Write a short, warm, personalized outreach email for Comfort Care Senior Living for this specific person:
+- Name: ${firstName}
+- Community interested in: ${community}
+- Care type: ${careType}
+- Their message/notes: "${leadMsg || "none"}"
+
+Instructions:
+- Address them by name (${firstName})
+- Naturally reference their community (${community}) and care type (${careType})
+- If they left a message, acknowledge it with empathy
+- Under 160 words, human tone, not salesy
+- Sign off as "The Comfort Care Team"
+- Return JSON with keys: subject (string) and body (string)`;
+
+            const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: perLeadPrompt }], response_format: { type: "json_object" }, max_tokens: 400 })
+            });
+            const aiData = await aiRes.json();
+            const parsed = JSON.parse(aiData.choices?.[0]?.message?.content || "{}");
+            if (parsed.body) finalBody = parsed.body;
+          } catch (err) { console.error(`AI per-lead error for ${lead.email}:`, err.message); }
+        }
+
+        const result = await sendEmail({ to: lead.email, subject, body: finalBody });
+        await db.from("email_outreach").insert({ lead_id: lead.id, recipient_email: lead.email, subject, body: finalBody, status: result.status });
         await db.from("leads").update({ status: "Contacted", updated_at: new Date().toISOString() }).eq("id", lead.id);
         if (result.status === "Sent") sent++; else failed++;
       }
