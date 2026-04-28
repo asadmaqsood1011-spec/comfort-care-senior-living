@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "",
-  "outputDirectory": "public",
   "routes": [
     { "src": "/api/leads", "dest": "/api/leads.js" },
     { "src": "/api/admin/login", "dest": "/api/admin/login.js" },
@@ -9,11 +7,11 @@
     { "src": "/api/admin/leads(.*)", "dest": "/api/admin/leads.js" },
     { "src": "/api/admin/outreach(.*)", "dest": "/api/admin/outreach.js" },
     { "src": "/health", "dest": "/api/health.js" },
+    { "src": "/admin/?$", "dest": "/public/admin.html" },
     {
       "src": "/(communities/[a-z0-9-]+|privacy|terms)/?$",
-      "dest": "/index.html"
+      "dest": "/public/index.html"
     },
-    { "src": "/admin/?$", "dest": "/admin.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
