@@ -53,28 +53,25 @@ async function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(actual, expected);
 }
 
-// In-memory session store (fine for serverless — sessions are short-lived)
-const sessions = new Map();
-
+// Stateless sessions — email + expiry encoded in the token, no in-memory store needed
 function createSession(email) {
-  const token = crypto.randomBytes(32).toString("base64url");
-  sessions.set(token, { email, createdAt: Date.now() });
-  return token;
+  const payload = JSON.stringify({ email, exp: Date.now() + 8 * 60 * 60 * 1000 });
+  return Buffer.from(payload).toString("base64url");
 }
 
 function validateSession(token) {
   if (!token) return false;
-  const session = sessions.get(token);
-  if (!session) return false;
-  if (Date.now() - session.createdAt > 8 * 60 * 60 * 1000) {
-    sessions.delete(token);
+  try {
+    const payload = JSON.parse(Buffer.from(token, "base64url").toString("utf8"));
+    if (!payload.email || !payload.exp) return false;
+    return Date.now() < payload.exp;
+  } catch {
     return false;
   }
-  return true;
 }
 
-function destroySession(token) {
-  if (token) sessions.delete(token);
+function destroySession(_token) {
+  // Stateless — nothing to destroy server-side; client clears the cookie
 }
 
 function isAuthenticated(req) {
