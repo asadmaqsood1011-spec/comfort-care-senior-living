@@ -1769,18 +1769,21 @@ textarea:focus {
   .community-map-stage {
     display: block;
     min-height: 0;
-    padding: 360px 18px 24px;
+    padding: 100px 18px 24px;
   }
 
   .community-map-stage canvas,
   .map-loading {
-    height: 360px;
+    height: 100px;
     bottom: auto;
   }
 
   .map-glass-panel {
     width: 100%;
     margin-inline: auto;
+    background: rgba(13, 26, 21, 0.92);
+    backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(201, 169, 110, 0.25);
   }
 
   .hero-content {
