@@ -10,9 +10,10 @@
     { "src": "/api/admin/outreach(.*)", "dest": "/api/admin/outreach.js" },
     { "src": "/health", "dest": "/api/health.js" },
     {
-      "src": "/(communities/[a-z0-9-]+|privacy|terms|admin)/?$",
+      "src": "/(communities/[a-z0-9-]+|privacy|terms)/?$",
       "dest": "/index.html"
     },
+    { "src": "/admin/?$", "dest": "/admin.html" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
