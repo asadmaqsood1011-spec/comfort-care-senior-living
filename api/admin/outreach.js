@@ -108,19 +108,21 @@ Instructions:
         // If the template uses placeholders only (AI-drafted), and we have OpenAI, generate a unique per-lead email
         if (OPENAI_API_KEY && emailBody.includes("{{")) {
           try {
-            const perLeadPrompt = `Write a short, warm, personalized outreach email for Comfort Care Senior Living for this specific person:
+            const perLeadPrompt = `Write a short, warm, personalized outreach email for Comfort Care Senior Living.
+
+Recipient details:
 - Name: ${firstName}
 - Community interested in: ${community}
 - Care type: ${careType}
-- Their message/notes: "${leadMsg || "none"}"
+- What they wrote: "${leadMsg || ""}"
 
-Instructions:
-- Address them by name (${firstName})
-- Naturally reference their community (${community}) and care type (${careType})
-- If they left a message, acknowledge it with empathy
-- Under 160 words, human tone, not salesy
-- Sign off as "The Comfort Care Team"
-- Return JSON with keys: subject (string) and body (string)`;
+STRICT rules:
+1. Start with "Hi ${firstName},"
+2. ${leadMsg ? `Their message mentions: "${leadMsg}" — you MUST reference this specifically in the first 2 sentences. For example if they mention their mom, say "your mom". If they mention a specific concern, address it directly.` : "They left no message — keep it warm and general."}
+3. Mention ${community} and ${careType} naturally
+4. Under 150 words, human and warm, never generic or corporate
+5. Sign off as "The Comfort Care Team"
+6. Return JSON with keys: subject (string) and body (string)`;
 
             const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
               method: "POST",
