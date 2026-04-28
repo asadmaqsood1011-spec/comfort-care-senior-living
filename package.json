@@ -1,26 +1,13 @@
 {
-  "name": "comfort-care-premium-redesign",
+  "name": "comfort-care-senior-living",
   "version": "1.0.0",
-  "description": "Premium Comfort Care Senior Living redesign with PostgreSQL lead capture and admin dashboard.",
-  "main": "server.js",
+  "description": "Comfort Care Senior Living website with lead capture and admin dashboard.",
   "type": "commonjs",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "check": "node --check server.js"
-  },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=18.0.0"
   },
   "dependencies": {
-    "embedded-postgres": "^18.3.0-beta.17",
     "nodemailer": "^8.0.7",
-    "pg": "^8.20.0",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.8",
-    "three": "^0.184.0"
-  },
-  "devDependencies": {
-    "playwright": "^1.59.1"
+    "pg": "^8.20.0"
   }
 }
