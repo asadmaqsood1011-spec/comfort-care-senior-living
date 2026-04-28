@@ -114,7 +114,22 @@ STRICT rules:
       return res.status(200).json({ ok: true, message: `Email sent to ${lead.email}`, subject });
     }
 
-    // PATCH status — /api/admin/leads?id=123
+    // GET /api/admin/leads/:id/emails — email history for a lead
+    if (req.method === "GET" && params.id && urlPath.includes("/emails")) {
+      const { data, error } = await db.from("email_outreach").select("*").eq("lead_id", params.id).order("created_at", { ascending: false });
+      if (error) throw error;
+      return res.status(200).json({ emails: data || [] });
+    }
+
+    // POST /api/admin/leads/:id/notes — save notes for a lead
+    if (req.method === "POST" && params.id && urlPath.includes("/notes")) {
+      const notes = clean(req.body?.notes || "").slice(0, 2000);
+      const { error } = await db.from("leads").update({ notes, updated_at: new Date().toISOString() }).eq("id", params.id);
+      if (error) throw error;
+      return res.status(200).json({ ok: true });
+    }
+
+    // PATCH status — /api/admin/leads/:id/status
     if (req.method === "PATCH" && params.id) {
       const status = clean(req.body?.status || "");
       if (!VALID_STATUSES.has(status)) return res.status(422).json({ error: "Invalid status." });
@@ -141,6 +156,7 @@ STRICT rules:
         preferredCommunity: r.preferred_community,
         careType: r.care_type,
         message: r.message,
+        notes: r.notes || "",
         status: r.status,
         submittedAt: r.created_at,
         updatedAt: r.updated_at

@@ -78,7 +78,7 @@
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -246,6 +246,142 @@ td strong {
   margin: 0;
   padding: 26px;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.lead-row:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tour-btn {
+  padding: 4px 8px;
+  color: rgba(255,255,255,0.5);
+}
+.tour-btn--active {
+  color: #4caf50 !important;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.status-new { background: rgba(231,210,165,0.15); color: #e7d2a5; }
+.status-contacted { background: rgba(74,144,226,0.15); color: #7ab3f0; }
+.status-tour-scheduled { background: rgba(76,175,80,0.15); color: #81c784; }
+.status-closed { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+
+/* Lead drawer */
+.lead-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(520px, 100vw);
+  height: 100vh;
+  max-height: 100vh;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  background: #0f1e18;
+  color: var(--white);
+  padding: 0;
+  overflow-y: auto;
+}
+.lead-drawer::backdrop {
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+}
+.drawer-inner {
+  display: grid;
+  gap: 24px;
+  padding: 28px;
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.drawer-header h2 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin: 0;
+}
+.drawer-close {
+  color: rgba(255,255,255,0.6);
+  flex: 0 0 auto;
+}
+.drawer-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.drawer-meta-grid span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.9rem;
+}
+.drawer-meta-grid svg {
+  width: 15px;
+  height: 15px;
+  color: var(--gold-soft);
+  flex: 0 0 auto;
+}
+.drawer-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.drawer-notes {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+}
+.muted {
+  color: rgba(255,255,255,0.45);
+  font-size: 0.9rem;
+}
+
+/* Email history */
+.email-history-item {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.04);
+}
+.email-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.email-history-header strong {
+  color: var(--white);
+  font-size: 0.92rem;
+}
+.email-status {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+.email-status.sent { background: rgba(76,175,80,0.2); color: #81c784; }
+.email-status.failed { background: rgba(244,67,54,0.2); color: #e57373; }
+.email-history-body {
+  color: rgba(255,255,255,0.55);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 0;
 }
 
 @media (max-width: 900px) {

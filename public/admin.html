@@ -46,7 +46,9 @@
         <div class="metrics">
           <article><span data-metric-total>0</span><small>Total leads</small></article>
           <article><span data-metric-new>0</span><small>New</small></article>
+          <article><span data-metric-contacted>0</span><small>Contacted</small></article>
           <article><span data-metric-tour>0</span><small>Tour scheduled</small></article>
+          <article><span data-metric-conversion>0%</span><small>Conversion rate</small></article>
         </div>
 
         <div class="filters">
@@ -106,18 +108,39 @@
                 <th>Name</th>
                 <th>Phone</th>
                 <th>Email</th>
-                <th>Preferred community</th>
+                <th>Community</th>
                 <th>Care type</th>
                 <th>Message</th>
-                <th>Date submitted</th>
+                <th>Date</th>
                 <th>Status</th>
-                <th></th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody data-leads-body></tbody>
           </table>
           <p class="empty-state" data-empty hidden>No leads match the current filters.</p>
         </div>
+
+        <!-- Lead detail drawer -->
+        <dialog class="lead-drawer" data-lead-drawer>
+          <div class="drawer-inner">
+            <div class="drawer-header">
+              <h2 data-drawer-name></h2>
+              <button class="btn btn-ghost drawer-close" data-drawer-close><i data-lucide="x"></i></button>
+            </div>
+            <div class="drawer-meta" data-drawer-meta></div>
+            <div class="drawer-section">
+              <p class="eyebrow">Notes / Memo</p>
+              <textarea class="drawer-notes" data-drawer-notes rows="4" placeholder="Add internal notes about this lead..."></textarea>
+              <button class="btn btn-primary" data-save-notes><i data-lucide="save"></i>Save Notes</button>
+              <output class="tool-status" data-notes-status aria-live="polite"></output>
+            </div>
+            <div class="drawer-section">
+              <p class="eyebrow">Email History</p>
+              <div data-email-history><p class="muted">Loading...</p></div>
+            </div>
+          </div>
+        </dialog>
       </section>
     </main>
 
