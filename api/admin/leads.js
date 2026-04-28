@@ -76,11 +76,28 @@ module.exports = async (req, res) => {
       const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
       if (OPENAI_API_KEY) {
         try {
-          const prompt = `Write a short warm outreach email for a senior living community called "${lead.preferred_community}" to a lead interested in "${lead.care_type}". Use {{first_name}} as placeholder. Under 120 words. Friendly, not salesy. Sign off as "The Comfort Care Team". Return JSON with keys: subject, body.`;
+          const firstName = clean(lead.full_name || "").split(" ")[0] || "there";
+          const leadMsg = lead.message || "";
+          const prompt = `Write a short, warm, personalized outreach email for Comfort Care Senior Living.
+
+Recipient details:
+- Name: ${firstName}
+- Community interested in: ${lead.preferred_community}
+- Care type: ${lead.care_type}
+- What they wrote: "${leadMsg}"
+
+STRICT rules:
+1. Start with "Hi ${firstName},"
+2. ${leadMsg ? `Their message says: "${leadMsg}" — you MUST reference this specifically in the first 2 sentences. If they mention a family member (mom, dad, etc), use that. Address their actual concern directly.` : "They left no message — keep it warm and general."}
+3. Mention ${lead.preferred_community} and ${lead.care_type} naturally
+4. Under 150 words, human and warm, never generic or corporate
+5. Sign off as "The Comfort Care Team"
+6. Return JSON with keys: subject (string) and body (string)`;
+
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" }, max_tokens: 300 })
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" }, max_tokens: 400 })
           });
           const aiData = await aiRes.json();
           const parsed = JSON.parse(aiData.choices?.[0]?.message?.content || "{}");
