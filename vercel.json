@@ -8,6 +8,7 @@
     { "src": "/api/leads", "dest": "/api/leads.js" },
     { "src": "/api/admin/login", "dest": "/api/admin/login.js" },
     { "src": "/api/admin/logout", "dest": "/api/admin/logout.js" },
+    { "src": "/api/admin/leads/import", "dest": "/api/admin/leads.js" },
     { "src": "/api/admin/leads/([0-9]+)/email", "dest": "/api/admin/leads.js?id=$1" },
     { "src": "/api/admin/leads/([0-9]+)/status", "dest": "/api/admin/leads.js?id=$1" },
     { "src": "/api/admin/leads/([0-9]+)", "dest": "/api/admin/leads.js?id=$1" },

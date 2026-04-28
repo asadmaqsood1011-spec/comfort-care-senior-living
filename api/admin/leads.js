@@ -23,6 +23,7 @@ module.exports = async (req, res) => {
 
   const db = getClient();
   const params = req.query || {};
+  const urlPath = req.url || "";
 
   try {
     // Export CSV
@@ -35,8 +36,35 @@ module.exports = async (req, res) => {
       return res.status(200).send(csv);
     }
 
+    // POST /api/admin/leads/import — bulk import CSV
+    if (req.method === "POST" && urlPath.includes("/import")) {
+      const csv = req.body?.csv || "";
+      if (!csv) return res.status(422).json({ error: "No CSV provided." });
+      const lines = csv.split(/\r?\n/).filter(Boolean);
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, ""));
+      const idx = (name) => headers.findIndex(h => h.includes(name));
+      const nameIdx = idx("name"); const phoneIdx = idx("phone"); const emailIdx = idx("email");
+      const communityIdx = idx("community"); const careIdx = idx("care"); const messageIdx = idx("message");
+      const inserted = []; const skipped = [];
+      for (const line of lines.slice(1)) {
+        const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+        const email = cols[emailIdx] || "";
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped.push(line); continue; }
+        const { error } = await db.from("leads").insert({
+          full_name: cols[nameIdx] || "Unknown",
+          phone: cols[phoneIdx] || "",
+          email,
+          preferred_community: cols[communityIdx] || "Unknown",
+          care_type: cols[careIdx] || "Unknown",
+          message: cols[messageIdx] || "",
+          status: "New"
+        });
+        if (error) skipped.push(email); else inserted.push(email);
+      }
+      return res.status(200).json({ ok: true, message: `Imported ${inserted.length} lead${inserted.length !== 1 ? "s" : ""}.`, skipped });
+    }
+
     // POST /api/admin/leads/:id/email — send AI email to one lead
-    const urlPath = req.url || "";
     if (req.method === "POST" && params.id && urlPath.includes("/email")) {
       const { data: rows, error: fetchErr } = await db.from("leads").select("*").eq("id", params.id).single();
       if (fetchErr || !rows) return res.status(404).json({ error: "Lead not found." });
