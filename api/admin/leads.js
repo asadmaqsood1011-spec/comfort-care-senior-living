@@ -53,7 +53,19 @@ module.exports = async (req, res) => {
 
     // GET list
     if (req.method === "GET") {
-      const leads = await getLeads(db, params);
+      const rows = await getLeads(db, params);
+      const leads = rows.map(r => ({
+        id: r.id,
+        fullName: r.full_name,
+        phone: r.phone,
+        email: r.email,
+        preferredCommunity: r.preferred_community,
+        careType: r.care_type,
+        message: r.message,
+        status: r.status,
+        submittedAt: r.created_at,
+        updatedAt: r.updated_at
+      }));
       return res.status(200).json({ leads });
     }
 
