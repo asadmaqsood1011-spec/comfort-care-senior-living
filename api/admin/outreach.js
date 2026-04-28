@@ -56,7 +56,7 @@ Instructions:
 ${subjectHint ? `- The email MUST be centered around the subject hint: "${subjectHint}"` : ""}
 - Keep it under 160 words, warm and human, not salesy
 - Sign off as "The Comfort Care Team"
-- Use {{first_name}}, {{community}}, {{care_type}}, {{lead_message}} as placeholders so it personalizes per recipient
+- Use ONLY {{first_name}} and {{community}} as placeholders — do NOT use {{lead_message}} or {{care_type}} literally in the text, weave those details in naturally
 - Return JSON with keys: subject (string) and body (string)`;
 
           const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
