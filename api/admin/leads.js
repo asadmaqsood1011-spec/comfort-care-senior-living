@@ -1,6 +1,6 @@
 const { getClient } = require("../_lib/db");
 const { isAuthenticated } = require("../_lib/auth");
-const { toLeadCsv, parseDateFilter, clean, VALID_STATUSES } = require("../_lib/helpers");
+const { toLeadCsv, parseDateFilter, clean, VALID_STATUSES, sendEmail, personalizeEmail } = require("../_lib/helpers");
 
 async function getLeads(db, params = {}) {
   let q = db.from("leads").select("*").order("created_at", { ascending: false });
@@ -33,6 +33,38 @@ module.exports = async (req, res) => {
       res.setHeader("Content-Disposition", 'attachment; filename="comfort-care-leads.csv"');
       res.setHeader("Cache-Control", "no-store");
       return res.status(200).send(csv);
+    }
+
+    // POST /api/admin/leads/:id/email — send AI email to one lead
+    const urlPath = req.url || "";
+    if (req.method === "POST" && params.id && urlPath.includes("/email")) {
+      const { data: rows, error: fetchErr } = await db.from("leads").select("*").eq("id", params.id).single();
+      if (fetchErr || !rows) return res.status(404).json({ error: "Lead not found." });
+      const lead = rows;
+
+      let subject = `A personal note from Comfort Care Senior Living`;
+      let body = `Hi {{first_name}},\n\nThank you for your interest in ${lead.preferred_community}. We'd love to help you explore care options for ${lead.care_type}.\n\nWould you like to schedule a call or tour?\n\nWarmly,\nThe Comfort Care Team`;
+
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+      if (OPENAI_API_KEY) {
+        try {
+          const prompt = `Write a short warm outreach email for a senior living community called "${lead.preferred_community}" to a lead interested in "${lead.care_type}". Use {{first_name}} as placeholder. Under 120 words. Friendly, not salesy. Sign off as "The Comfort Care Team". Return JSON with keys: subject, body.`;
+          const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" }, max_tokens: 300 })
+          });
+          const aiData = await aiRes.json();
+          const parsed = JSON.parse(aiData.choices?.[0]?.message?.content || "{}");
+          if (parsed.subject && parsed.body) { subject = parsed.subject; body = parsed.body; }
+        } catch (e) { console.error("AI error:", e.message); }
+      }
+
+      const personalizedBody = personalizeEmail(body, lead);
+      const result = await sendEmail({ to: lead.email, subject, body: personalizedBody });
+      await db.from("email_outreach").insert({ lead_id: lead.id, recipient_email: lead.email, subject, body: personalizedBody, status: result.status });
+      await db.from("leads").update({ status: "Contacted", updated_at: new Date().toISOString() }).eq("id", lead.id);
+      return res.status(200).json({ ok: true, message: `Email sent to ${lead.email}`, subject });
     }
 
     // PATCH status — /api/admin/leads?id=123
