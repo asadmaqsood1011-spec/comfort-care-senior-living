@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
       const sampleCareType = sampleLead.care_type || careType;
       const sampleMessage = sampleLead.message || "";
 
+      const subjectHint = clean(body.subjectHint || "");
       const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
       if (OPENAI_API_KEY) {
         try {
@@ -46,11 +47,13 @@ module.exports = async (req, res) => {
 - Interested community: ${sampleCommunity}
 - Care type: ${sampleCareType}
 - Their message/notes: "${sampleMessage || "none provided"}"
+${subjectHint ? `- Subject/topic to focus on: "${subjectHint}" — the email body and subject should be built around this theme` : ""}
 
 Instructions:
 - Address them by first name
 - Reference their specific community interest and care type naturally
 - If they left a message, acknowledge it briefly and empathetically
+${subjectHint ? `- The email MUST be centered around the subject hint: "${subjectHint}"` : ""}
 - Keep it under 160 words, warm and human, not salesy
 - Sign off as "The Comfort Care Team"
 - Use {{first_name}}, {{community}}, {{care_type}}, {{lead_message}} as placeholders so it personalizes per recipient

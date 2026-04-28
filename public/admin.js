@@ -405,7 +405,8 @@ async function draftEmail() {
   try {
     const filters = currentFilters();
     if (draftCommunity.value) filters.community = draftCommunity.value;
-    const data = await postJson("/api/admin/outreach/draft", { filters });
+    const existingSubject = emailSubject.value.trim();
+    const data = await postJson("/api/admin/outreach/draft", { filters, subjectHint: existingSubject });
     emailSubject.value = data.subject || "";
     emailBody.value = data.body || "";
     outreachStatus.textContent = `Draft ready for ${data.recipients || 0} lead${data.recipients === 1 ? "" : "s"}.`;
