@@ -102,6 +102,7 @@ Instructions:
         const community = lead.preferred_community || "Comfort Care";
         const careType = lead.care_type || "senior living";
         const leadMsg = lead.message || "";
+        const personalContext = [careType, leadMsg].filter(Boolean).join(" | ");
 
         let finalBody = personalizeEmail(emailBody, lead);
 
@@ -113,14 +114,13 @@ Instructions:
 Recipient details:
 - Name: ${firstName}
 - Community interested in: ${community}
-- Care type: ${careType}
-- What they wrote: "${leadMsg || ""}"
+- Their notes/context: "${personalContext}"
 
 STRICT rules:
 1. Start with "Hi ${firstName},"
-2. ${leadMsg ? `Their message mentions: "${leadMsg}" — you MUST reference this specifically in the first 2 sentences. For example if they mention their mom, say "your mom". If they mention a specific concern, address it directly.` : "They left no message — keep it warm and general."}
-3. Mention ${community} and ${careType} naturally
-4. Under 150 words, human and warm, never generic or corporate
+2. Their notes say: "${personalContext}" — EXTRACT any personal detail (family member like mom/dad, specific concern) and reference it directly in the FIRST sentence.
+3. Mention ${community} naturally
+4. Under 150 words, human and warm, never generic
 5. Sign off as "The Comfort Care Team"
 6. Return JSON with keys: subject (string) and body (string)`;
 

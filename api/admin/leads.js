@@ -78,18 +78,20 @@ module.exports = async (req, res) => {
         try {
           const firstName = clean(lead.full_name || "").split(" ")[0] || "there";
           const leadMsg = lead.message || "";
+          const careType = lead.care_type || "";
+          // Combine care_type + message — care_type often contains personal context like "for my mom"
+          const personalContext = [careType, leadMsg].filter(Boolean).join(" | ");
           const prompt = `Write a short, warm, personalized outreach email for Comfort Care Senior Living.
 
 Recipient details:
 - Name: ${firstName}
 - Community interested in: ${lead.preferred_community}
-- Care type: ${lead.care_type}
-- What they wrote: "${leadMsg}"
+- Their notes/context: "${personalContext}"
 
 STRICT rules:
 1. Start with "Hi ${firstName},"
-2. ${leadMsg ? `Their message says: "${leadMsg}" — you MUST reference this specifically in the first 2 sentences. If they mention a family member (mom, dad, etc), use that. Address their actual concern directly.` : "They left no message — keep it warm and general."}
-3. Mention ${lead.preferred_community} and ${lead.care_type} naturally
+2. Their notes say: "${personalContext}" — EXTRACT any personal detail (family member like mom/dad, specific concern, urgency) and reference it directly in the FIRST sentence. E.g. if it mentions "mom", say "your mom". If it says "dad", say "your father".
+3. Mention ${lead.preferred_community} naturally
 4. Under 150 words, human and warm, never generic or corporate
 5. Sign off as "The Comfort Care Team"
 6. Return JSON with keys: subject (string) and body (string)`;
