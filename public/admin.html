@@ -31,10 +31,65 @@
       </section>
 
       <section class="dashboard" data-dashboard hidden>
+        <aside class="admin-sidebar">
+          <a class="admin-sidebar-brand" href="/">
+            <span class="brand-mark">CC</span>
+            <span><strong>Comfort Care</strong><small>Operations</small></span>
+          </a>
+          <div class="admin-location-filter" data-admin-location-filter>
+            <button class="admin-location-toggle" type="button" data-admin-location-toggle>
+              <i data-lucide="map-pin"></i>
+              <span data-admin-location-label>All Locations</span>
+              <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="admin-location-popover" data-admin-location-popover hidden>
+              <label class="admin-location-search">
+                <i data-lucide="search"></i>
+                <input data-admin-location-search placeholder="Search locations">
+              </label>
+              <label class="admin-location-check">
+                <input type="checkbox" data-admin-location-all checked>
+                <span>All Locations</span>
+              </label>
+              <div class="admin-location-group">
+                <p>Individual locations</p>
+                <div class="admin-location-options" data-admin-location-options></div>
+              </div>
+              <div class="admin-location-actions">
+                <button type="button" data-admin-location-reset>Reset</button>
+                <button type="button" data-admin-location-apply>Apply</button>
+              </div>
+            </div>
+          </div>
+          <nav class="admin-side-nav" aria-label="Admin sections">
+            <small>Dashboard</small>
+            <a href="#overview" class="is-active" data-admin-view="overview"><i data-lucide="layout-dashboard"></i>Overview</a>
+            <a href="#leads" data-admin-view="leads"><i data-lucide="users"></i>Leads CRM</a>
+            <a href="#occupancy" data-admin-view="occupancy"><i data-lucide="bed-double"></i>Occupancy</a>
+            <a href="#checkins" data-admin-view="checkins"><i data-lucide="clipboard-check"></i>Check-Ins</a>
+            <a href="#tasks" data-admin-view="tasks"><i data-lucide="list-checks"></i>Tasks</a>
+            <a href="#move-in" data-admin-view="move-in"><i data-lucide="clipboard-list"></i>Move-In</a>
+            <a href="#shift-notes" data-admin-view="shift-notes"><i data-lucide="notebook-pen"></i>Shift Notes</a>
+            <small>Reports</small>
+            <a href="#reports" data-admin-view="reports"><i data-lucide="bar-chart-3"></i>Reports</a>
+            <a href="#outreach" data-admin-view="outreach"><i data-lucide="mail"></i>Outreach</a>
+            <small>Tools</small>
+            <a href="#tour-packets" data-admin-view="tour-packets"><i data-lucide="file-stack"></i>Tour Packets</a>
+            <a href="#documents" data-admin-view="documents"><i data-lucide="folder-open"></i>Documents</a>
+            <a href="#lead-entry" data-admin-view="lead-entry"><i data-lucide="user-plus"></i>Add Leads</a>
+            <a href="#settings" data-admin-view="settings"><i data-lucide="settings"></i>Settings</a>
+          </nav>
+          <div class="admin-sidebar-card">
+            <small>Quick forms</small>
+            <a href="/tablet-form" target="_blank" rel="noopener noreferrer">Inquiry Packet</a>
+            <a href="/check-in" target="_blank" rel="noopener noreferrer">Facility Check-In</a>
+          </div>
+        </aside>
+        <div class="admin-main-panel">
         <header class="dashboard-header">
           <div>
             <p class="eyebrow">Comfort Care Senior Living</p>
-            <h1>Submitted Leads</h1>
+            <h1 data-admin-view-title>Overview</h1>
           </div>
           <div class="dashboard-actions">
             <a class="btn btn-ghost" href="/"><i data-lucide="home"></i>View Site</a>
@@ -43,17 +98,373 @@
           </div>
         </header>
 
-        <div class="metrics">
+        <div class="metrics" id="overview">
           <article><span data-metric-total>0</span><small>Total leads</small></article>
           <article><span data-metric-new>0</span><small>New</small></article>
           <article><span data-metric-contacted>0</span><small>Contacted</small></article>
           <article><span data-metric-tour>0</span><small>Tour scheduled</small></article>
+          <article><span data-metric-tour-completed>0</span><small>Tour completed</small></article>
+          <article><span data-metric-decision-pending>0</span><small>Decision pending</small></article>
+          <article><span data-metric-moved-in>0</span><small>Moved in</small></article>
+          <article><span data-metric-closed>0</span><small>Closed</small></article>
           <article><span data-metric-conversion>0%</span><small>Conversion rate</small></article>
+          <article><span data-metric-followups>0</span><small>Due today</small></article>
+        </div>
+
+        <section class="occupancy-panel" id="occupancy" data-occupancy-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Community Operations</p>
+              <h2>Occupancy Tracker</h2>
+            </div>
+            <button class="btn btn-primary" type="button" data-save-occupancy><i data-lucide="save"></i>Save Occupancy</button>
+          </div>
+          <div class="occupancy-summary">
+            <article><span data-occ-total>0</span><small>Total rooms</small></article>
+            <article><span data-occ-occupied>0</span><small>Occupied</small></article>
+            <article><span data-occ-available>0</span><small>Available</small></article>
+            <article><span data-occ-rate>0%</span><small>Occupancy rate</small></article>
+            <article><span data-occ-waitlist>0</span><small>Waitlist</small></article>
+          </div>
+          <div class="occupancy-list" data-occupancy-list>
+            <p class="muted">Loading occupancy...</p>
+          </div>
+          <output class="tool-status" data-occupancy-status aria-live="polite"></output>
+        </section>
+
+        <section class="operations-panel task-panel" id="tasks" data-task-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Staff Workflow</p>
+              <h2>Task Board</h2>
+            </div>
+            <span data-task-count>0 open</span>
+          </div>
+          <form class="operations-form" data-task-form>
+            <label>Task<input name="title" required placeholder="Call family after tour"></label>
+            <label>Community<select name="community" data-task-community required></select></label>
+            <label>Type<select name="type" data-task-type>
+              <option>Call family</option><option>Prepare tour room</option><option>Send pricing packet</option><option>Medicaid paperwork</option><option>Post-tour follow-up</option><option>Other</option>
+            </select></label>
+            <label>Assigned to<input name="assignedTo" placeholder="Admin or staff name"></label>
+            <label>Due date<input name="dueDate" type="date"></label>
+            <label class="operations-wide">Notes<input name="notes" placeholder="Optional task notes"></label>
+            <button class="btn btn-primary" type="submit"><i data-lucide="plus"></i>Add Task</button>
+          </form>
+          <div class="task-board" data-task-board></div>
+          <output class="tool-status" data-task-status aria-live="polite"></output>
+        </section>
+
+        <section class="operations-panel movein-panel" id="move-in" data-movein-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Resident Transition</p>
+              <h2>Move-In Checklist</h2>
+            </div>
+            <button class="btn btn-primary" type="button" data-save-movein><i data-lucide="save"></i>Save Checklist</button>
+          </div>
+          <div class="movein-layout">
+            <form class="operations-form movein-form" data-movein-form>
+              <label>Lead / resident<select name="leadId" data-movein-lead></select></label>
+              <label>Community<select name="community" data-movein-community></select></label>
+              <label>Target move-in<input name="targetDate" type="date"></label>
+              <label class="operations-wide">Notes<input name="notes" placeholder="Room, paperwork, family notes"></label>
+              <div class="checklist-grid">
+                <label><input type="checkbox" name="roomReady"> Room ready</label>
+                <label><input type="checkbox" name="medList"> Medication list received</label>
+                <label><input type="checkbox" name="physicianForms"> Physician forms</label>
+                <label><input type="checkbox" name="paymentPaperwork"> Payment paperwork</label>
+                <label><input type="checkbox" name="familyContact"> Family contact saved</label>
+                <label><input type="checkbox" name="carePlanMeeting"> Care plan meeting booked</label>
+              </div>
+            </form>
+            <div class="movein-list" data-movein-list><p class="muted">No move-in checklists yet.</p></div>
+          </div>
+          <output class="tool-status" data-movein-status aria-live="polite"></output>
+        </section>
+
+        <section class="operations-panel packet-panel" id="tour-packets" data-packet-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Tour Prep</p>
+              <h2>Tour Packet Builder</h2>
+            </div>
+            <button class="btn btn-primary" type="button" data-print-packet><i data-lucide="printer"></i>Print Packet</button>
+          </div>
+          <div class="packet-controls">
+            <label>Lead<select data-packet-lead></select></label>
+            <label>Community<select data-packet-community></select></label>
+            <button class="btn btn-ghost" type="button" data-build-packet><i data-lucide="file-stack"></i>Build Packet</button>
+          </div>
+          <div class="packet-preview" data-packet-preview>
+            <p class="muted">Choose a lead and community to build a private tour packet.</p>
+          </div>
+        </section>
+
+        <section class="operations-panel shift-panel" id="shift-notes" data-shift-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Community Handoff</p>
+              <h2>Staff Shift Notes</h2>
+            </div>
+            <span data-shift-count>0 notes</span>
+          </div>
+          <form class="operations-form" data-shift-form>
+            <label>Community<select name="community" data-shift-community required></select></label>
+            <label>Date<input name="shiftDate" type="date"></label>
+            <label>Category<select name="category">
+              <option>Daily note</option><option>Maintenance</option><option>Family concern</option><option>Dining/activity</option><option>Manager review</option>
+            </select></label>
+            <label>Author<input name="author" placeholder="Staff name"></label>
+            <label class="operations-wide">Note<textarea name="note" rows="4" required placeholder="What should the next person know?"></textarea></label>
+            <button class="btn btn-primary" type="submit"><i data-lucide="plus"></i>Add Note</button>
+          </form>
+          <div class="shift-list" data-shift-list><p class="muted">No shift notes yet.</p></div>
+          <output class="tool-status" data-shift-status aria-live="polite"></output>
+        </section>
+
+        <section class="operations-panel docs-panel" id="documents" data-docs-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Admin Library</p>
+              <h2>Document Center</h2>
+            </div>
+            <span data-doc-count>0 docs</span>
+          </div>
+          <form class="operations-form" data-doc-form>
+            <label>Title<input name="title" required placeholder="Bay City pricing sheet"></label>
+            <label>Community<select name="community" data-doc-community></select></label>
+            <label>Type<select name="type">
+              <option>Brochure</option><option>Pricing</option><option>Floor plan</option><option>Medicaid form</option><option>Tour packet</option><option>Other</option>
+            </select></label>
+            <label>Document link<input name="url" required placeholder="https://..."></label>
+            <label class="operations-wide">Notes<input name="notes" placeholder="Optional notes for staff"></label>
+            <button class="btn btn-primary" type="submit"><i data-lucide="plus"></i>Add Document</button>
+          </form>
+          <p class="merge-help">For now this stores secure document links and metadata in Supabase. Full file uploads should use Supabase Storage when this goes production.</p>
+          <div class="doc-list" data-doc-list><p class="muted">No documents saved yet.</p></div>
+          <output class="tool-status" data-doc-status aria-live="polite"></output>
+        </section>
+
+        <section class="checkin-panel" id="checkins" data-checkin-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Facility Operations</p>
+              <h2>Visitor Check-Ins</h2>
+            </div>
+            <div class="panel-actions">
+              <a class="btn btn-ghost" href="/check-in" target="_blank" rel="noopener noreferrer"><i data-lucide="clipboard-check"></i>Open Check-In Form</a>
+              <button class="btn btn-primary" type="button" data-refresh-checkins><i data-lucide="refresh-cw"></i>Refresh</button>
+            </div>
+          </div>
+          <div class="checkin-toolbar">
+            <label>Community<select data-checkin-community></select></label>
+            <label>Date from<input data-checkin-date-from type="date"></label>
+            <label>Date to<input data-checkin-date-to type="date"></label>
+          </div>
+          <div class="checkin-list" data-checkin-list>
+            <p class="muted">No visitor check-ins loaded yet.</p>
+          </div>
+          <output class="tool-status" data-checkin-status aria-live="polite"></output>
+        </section>
+
+        <section class="daily-report-panel" id="reports" data-daily-report>
+          <div class="daily-report-metrics">
+            <div class="daily-report-title">
+              <p class="eyebrow">Daily Report</p>
+              <h2>Today's Operator Brief</h2>
+            </div>
+            <div class="daily-report-grid">
+              <article><span data-report-new>0</span><small>New</small></article>
+              <article><span data-report-hot>0</span><small>Hot</small></article>
+              <article><span data-report-followups>0</span><small>Due</small></article>
+              <article><span data-report-tours>0</span><small>Tours</small></article>
+              <article><span data-report-emails>0</span><small>Emails</small></article>
+              <article><span data-report-community>None yet</span><small>Top community</small></article>
+            </div>
+          </div>
+          <div class="daily-report-brief">
+            <div class="daily-report-actions">
+              <button class="btn btn-ghost" type="button" data-copy-daily-report><i data-lucide="copy"></i>Copy</button>
+              <button class="btn btn-primary" type="button" data-generate-daily-report><i data-lucide="sparkles"></i>Generate Summary</button>
+            </div>
+            <div class="daily-report-summary" data-daily-report-summary>
+              Loading today's report...
+            </div>
+            <output class="tool-status" data-daily-report-status aria-live="polite"></output>
+          </div>
+        </section>
+
+        <section class="reports-analytics" data-report-charts>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Performance Analytics</p>
+              <h2>Admissions Snapshot</h2>
+            </div>
+            <span data-report-chart-scope>All locations</span>
+          </div>
+          <div class="report-chart-grid">
+            <article class="report-chart-card">
+              <div class="chart-card-heading">
+                <strong>7-Day Lead Trend</strong>
+                <small>New inquiries by day</small>
+              </div>
+              <div class="mini-bar-chart" data-report-trend></div>
+            </article>
+            <article class="report-chart-card">
+              <div class="chart-card-heading">
+                <strong>Pipeline Stage Mix</strong>
+                <small>Where every lead sits right now</small>
+              </div>
+              <div class="pipeline-chart" data-report-pipeline></div>
+            </article>
+            <article class="report-chart-card">
+              <div class="chart-card-heading">
+                <strong>Source Conversion</strong>
+                <small>Moved-in performance by source</small>
+              </div>
+              <div class="source-chart" data-report-source-chart></div>
+            </article>
+            <article class="report-chart-card">
+              <div class="chart-card-heading">
+                <strong>Care Type Mix</strong>
+                <small>Demand by service type</small>
+              </div>
+              <div class="care-chart" data-report-care-chart></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="settings-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Automation</p>
+              <h2>Settings</h2>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <strong>Auto-email new leads</strong>
+              <p>Automatically sends a personalized welcome email to every new lead when they submit an inquiry.</p>
+            </div>
+            <label class="toggle-switch" aria-label="Toggle auto-email">
+              <input type="checkbox" data-auto-email-toggle>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <strong>Google Calendar tours</strong>
+              <p>Connect an admin calendar so scheduled tours automatically create or update calendar events.</p>
+              <small class="calendar-status-text" data-calendar-status>Checking calendar connection...</small>
+            </div>
+            <div class="calendar-actions">
+              <button class="btn btn-primary" type="button" data-calendar-connect><i data-lucide="calendar-plus"></i>Connect Calendar</button>
+              <button class="btn btn-ghost" type="button" data-calendar-disconnect hidden><i data-lucide="unlink"></i>Disconnect</button>
+            </div>
+          </div>
+          <output class="tool-status" data-settings-status aria-live="polite"></output>
+        </section>
+
+        <section class="forecast-panel" data-forecast-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">AI Revenue Forecast</p>
+              <h2>Move-In Forecast</h2>
+            </div>
+            <button class="btn btn-primary" type="button" data-generate-forecast><i data-lucide="sparkles"></i>Generate Forecast</button>
+          </div>
+          <div class="forecast-controls">
+            <label>Average monthly rate<input data-forecast-rate type="number" min="1000" step="100" value="5000"></label>
+            <p>Runs only when clicked, using the current lead pipeline, tour activity, urgency, and follow-up data.</p>
+          </div>
+          <div class="forecast-result" data-forecast-result>
+            <article><span>--</span><small>Estimated move-ins this month</small></article>
+            <article><span>--</span><small>Projected monthly revenue</small></article>
+            <article><span>--</span><small>Confidence</small></article>
+          </div>
+          <div class="forecast-summary" data-forecast-summary>
+            Click Generate Forecast to calculate the current move-in outlook.
+          </div>
+          <output class="tool-status" data-forecast-status aria-live="polite"></output>
+        </section>
+
+        <section class="source-performance" data-source-performance aria-label="Lead source performance"></section>
+
+        <section class="community-panel" data-community-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Community Dashboard</p>
+              <h2>Location Performance</h2>
+            </div>
+            <span data-community-count>0 communities</span>
+          </div>
+          <div class="community-list" data-community-list></div>
+        </section>
+
+        <section class="tour-panel" data-tour-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Tour Calendar</p>
+              <h2>Upcoming Tours</h2>
+            </div>
+            <span data-tour-count>0 scheduled</span>
+          </div>
+          <div class="tour-list" data-tour-list>
+            <p class="muted">No upcoming tours scheduled.</p>
+          </div>
+        </section>
+
+        <section class="past-tour-panel" data-past-tour-panel style="display:none">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Needs Attention</p>
+              <h2>Past Tours — Did These Happen?</h2>
+            </div>
+            <span data-past-tour-count>0</span>
+          </div>
+          <div class="past-tour-list" data-past-tour-list></div>
+        </section>
+
+        <section class="followup-panel" data-followup-panel>
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Follow-Ups Due</p>
+              <h2>Today's Priority List</h2>
+            </div>
+            <span data-followup-count>0 due</span>
+          </div>
+          <div class="followup-list" data-followup-list>
+            <p class="muted">No follow-ups due today.</p>
+          </div>
+        </section>
+
+        <div class="funnel-toggle-bar">
+          <button type="button" class="funnel-toggle-btn" id="funnelToggleBtn">
+            <span>Pipeline Funnel</span>
+            <span class="funnel-toggle-icon">▾</span>
+          </button>
+        </div>
+        <div class="funnel-section" id="funnelSection" hidden>
+          <div class="funnel-bars" data-funnel-bars></div>
         </div>
 
         <div class="filters">
           <label>Search<input data-search placeholder="Name, email, phone, message"></label>
-          <label>Community<select data-filter-community></select></label>
+          <label>Location<select data-filter-community></select></label>
+          <label>Source<select data-filter-source></select></label>
+          <label>Priority<select data-filter-priority></select></label>
+          <label>Score<select data-filter-score></select><button type="button" class="score-info-btn" id="scoreInfoBtn" title="How scoring works">ⓘ</button></label>
+          <div class="score-info-popover" id="scoreInfoPopover" hidden>
+            <strong>How lead score works</strong>
+            <ul>
+              <li>🔴 <b>Hot (70–100)</b> — urgent signals, hospital/discharge, active tour</li>
+              <li>🟡 <b>Warm (35–69)</b> — tour interest, memory care, follow-up set</li>
+              <li>⚪ <b>Cold (0–34)</b> — minimal signals or early research stage</li>
+              <li>🩶 <b>Stale</b> — no activity in 30+ days, regardless of score</li>
+            </ul>
+            <p>Score drops -1/day after 14 days of inactivity (max -20). Negating phrases like "not urgent" cancel positive signals.</p>
+          </div>
           <label>Status<select data-filter-status></select></label>
           <label>Date from<input data-filter-date-from type="date"></label>
           <label>Date to<input data-filter-date-to type="date"></label>
@@ -62,33 +473,65 @@
           </button>
         </div>
 
-        <div class="admin-tools">
+        <div class="admin-tools" id="outreach">
           <article class="admin-tool-card">
             <div class="tool-heading">
               <div>
-                <p class="eyebrow">Lead Import</p>
-                <h2>Upload Leads</h2>
+                <p class="eyebrow">Lead Entry</p>
+                <h2>Add Leads</h2>
               </div>
-              <i data-lucide="upload-cloud"></i>
+              <i data-lucide="user-plus"></i>
             </div>
-            <p class="tool-copy">Import a CSV with name, phone, email, community, care type, message, and status. Duplicate emails are skipped.</p>
-            <label class="file-picker">CSV file<input data-import-file type="file" accept=".csv,text/csv"></label>
-            <textarea data-import-csv rows="6" placeholder="Paste CSV rows here..."></textarea>
-            <button class="btn btn-primary" type="button" data-import-leads><i data-lucide="database"></i>Upload Leads CSV</button>
+            <p class="tool-copy">Upload a lead list or enter one inquiry manually from the admin dashboard.</p>
+            <div class="lead-add-tabs" role="tablist" aria-label="Add lead method">
+              <button class="active" type="button" data-add-tab="csv">CSV Upload</button>
+              <button type="button" data-add-tab="manual">Manual Entry</button>
+            </div>
+            <div class="lead-add-panel active" data-add-panel="csv">
+              <p class="merge-help">Import a CSV with name, phone, email, community, care type, message, and status.</p>
+              <label class="file-picker">CSV file<input data-import-file type="file" accept=".csv,text/csv"></label>
+              <textarea data-import-csv rows="6" placeholder="Paste CSV rows here..."></textarea>
+              <button class="btn btn-primary" type="button" data-import-leads><i data-lucide="database"></i>Upload Leads CSV</button>
+            </div>
+            <form class="lead-add-panel manual-lead-form" data-add-panel="manual" data-manual-lead-form>
+              <label>Full name<input name="fullName" required placeholder="Jane Smith"></label>
+              <label>Phone<input name="phone" required placeholder="(555) 123-4567"></label>
+              <label>Email<input name="email" type="email" placeholder="jane@example.com"></label>
+              <label>Community<select name="location" data-manual-community></select></label>
+              <label>Care type<select name="careType" data-manual-care-type></select></label>
+              <label class="manual-notes">Notes<textarea name="notes" rows="4" placeholder="Family situation, timeline, payment questions, tour preference..."></textarea></label>
+              <button class="btn btn-primary" type="submit"><i data-lucide="user-plus"></i>Add Lead</button>
+            </form>
             <output class="tool-status" data-import-status aria-live="polite"></output>
           </article>
 
           <article class="admin-tool-card">
             <div class="tool-heading">
               <div>
-                <p class="eyebrow">AI Email Outreach</p>
-                <h2>Draft & Test</h2>
+                <p class="eyebrow">Email All Leads</p>
+                <h2>Mass Email Outreach</h2>
               </div>
               <i data-lucide="sparkles"></i>
             </div>
+            <p class="tool-copy">Create one campaign message and email every lead that matches your filters.</p>
+            <p class="merge-help"><strong>Personalization fields:</strong> <code>{{first_name}}</code> becomes the lead's first name, <code>{{community}}</code> becomes their selected community, and <code>{{care_type}}</code> becomes the care they need.</p>
 
-            <label>Community (optional)<select data-draft-community><option value="">All communities</option></select></label>
+            <div class="outreach-filter-grid">
+              <label>Community<select data-draft-community><option value="">All communities</option></select></label>
+              <label>Status<select data-draft-status><option value="">All statuses</option></select></label>
+              <label>Lead score<select data-draft-score><option value="">All scores</option></select></label>
+              <label>Source<select data-draft-source><option value="">All sources</option></select></label>
+              <label>Priority<select data-draft-priority><option value="">All priorities</option></select></label>
+            </div>
             <button class="btn btn-ghost tool-action" type="button" data-draft-email><i data-lucide="wand-sparkles"></i>Generate AI Draft</button>
+            <div class="template-buttons" data-template-buttons>
+              <button type="button" data-template="afterInquiry">After inquiry</button>
+              <button type="button" data-template="afterTour">After tour</button>
+              <button type="button" data-template="noShow">No-show tour</button>
+              <button type="button" data-template="pricing">Pricing follow-up</button>
+              <button type="button" data-template="moveIn">Move-in checklist</button>
+              <button type="button" data-template="medicaid">Medicaid waiver</button>
+            </div>
             <label>Subject<input data-email-subject placeholder="Email subject"></label>
             <label>Email body<textarea data-email-body rows="9" placeholder="Generate or write a message..."></textarea></label>
             <div class="test-send-row">
@@ -96,21 +539,35 @@
               <button class="btn btn-primary" type="button" data-send-test-email><i data-lucide="send"></i>Send Test Email</button>
             </div>
             <button class="btn btn-ghost tool-action" type="button" data-send-demo-campaign><i data-lucide="mail-check"></i>Log Demo Campaign</button>
-            <button class="btn btn-primary tool-action" type="button" data-send-live-campaign style="background:#c0392b;border-color:#c0392b"><i data-lucide="send"></i>⚡ Send Live Emails to All Leads</button>
+            <button class="btn btn-primary tool-action" type="button" data-send-live-campaign style="background:#c0392b;border-color:#c0392b"><i data-lucide="send"></i>Send Live Emails to All Leads</button>
             <output class="tool-status" data-outreach-status aria-live="polite"></output>
+          </article>
+
+          <article class="admin-tool-card campaign-history-card">
+            <div class="tool-heading">
+              <div>
+                <p class="eyebrow">Outreach Log</p>
+                <h2>Campaign History</h2>
+              </div>
+              <i data-lucide="history"></i>
+            </div>
+            <p class="tool-copy">Track every mass email promotion so the team knows what went out and who received it.</p>
+            <label class="archive-toggle"><input data-show-archived-campaigns type="checkbox"> Show archived campaigns</label>
+            <div class="campaign-history-list" data-campaign-history>
+              <p class="muted">No campaigns logged yet.</p>
+            </div>
+            <output class="tool-status" data-campaign-history-status aria-live="polite"></output>
           </article>
         </div>
 
-        <div class="table-wrap">
+        <div class="table-wrap" id="leads">
           <table>
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Phone</th>
-                <th>Email</th>
-                <th>Community</th>
-                <th>Care type</th>
-                <th>Message</th>
+                <th>Location</th>
+                <th>Source</th>
                 <th>Date</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -119,6 +576,11 @@
             <tbody data-leads-body></tbody>
           </table>
           <p class="empty-state" data-empty hidden>No leads match the current filters.</p>
+          <div class="pagination" data-pagination hidden>
+            <button class="btn btn-ghost" type="button" data-page-prev>Previous</button>
+            <span data-page-status>Page 1 of 1</span>
+            <button class="btn btn-ghost" type="button" data-page-next>Next</button>
+          </div>
         </div>
 
         <!-- Lead detail drawer -->
@@ -136,11 +598,41 @@
               <output class="tool-status" data-notes-status aria-live="polite"></output>
             </div>
             <div class="drawer-section">
-              <p class="eyebrow">Email History</p>
-              <div data-email-history><p class="muted">Loading...</p></div>
+              <p class="eyebrow">Follow-Up Reminder</p>
+              <div class="reminder-actions">
+                <button class="btn btn-ghost" type="button" data-reminder-preset="tomorrow">Tomorrow</button>
+                <button class="btn btn-ghost" type="button" data-reminder-preset="3-days">3 Days</button>
+                <button class="btn btn-ghost" type="button" data-reminder-preset="1-week">1 Week</button>
+              </div>
+              <label>Custom date<input data-reminder-date type="date"></label>
+              <label>Reminder note<input data-reminder-note placeholder="Call family, confirm tour, send pricing..."></label>
+              <button class="btn btn-primary" type="button" data-save-reminder><i data-lucide="bell"></i>Save Reminder</button>
+              <output class="tool-status" data-reminder-status aria-live="polite"></output>
+            </div>
+            <div class="drawer-section" data-tour-section>
+              <p class="eyebrow">Tour Calendar</p>
+              <label>Tour date and time<input data-tour-date type="datetime-local"></label>
+              <div class="tour-actions">
+                <button class="btn btn-primary" type="button" data-save-tour><i data-lucide="calendar-check"></i>Save Tour</button>
+                <button class="btn btn-ghost" type="button" data-clear-tour><i data-lucide="calendar-x"></i>Clear Tour</button>
+              </div>
+              <output class="tool-status" data-tour-status aria-live="polite"></output>
+            </div>
+            <div class="drawer-section">
+              <p class="eyebrow">AI Email</p>
+              <button class="btn btn-ghost tool-action" type="button" data-generate-lead-email><i data-lucide="wand-sparkles"></i>Generate AI Email</button>
+              <label>Subject<input data-lead-email-subject placeholder="Generated subject"></label>
+              <label>Editable draft<textarea data-lead-email-body rows="8" placeholder="Generate or write an email draft..."></textarea></label>
+              <button class="btn btn-primary" type="button" data-send-lead-email><i data-lucide="send"></i>Send Email</button>
+              <output class="tool-status" data-lead-email-status aria-live="polite"></output>
+            </div>
+            <div class="drawer-section">
+              <p class="eyebrow">Lead Timeline</p>
+              <div class="timeline-list" data-lead-timeline><p class="muted">Loading...</p></div>
             </div>
           </div>
         </dialog>
+        </div>
       </section>
     </main>
 

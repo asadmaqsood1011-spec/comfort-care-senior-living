@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://comfort-care-senior-living.vercel.app/sitemap.xml

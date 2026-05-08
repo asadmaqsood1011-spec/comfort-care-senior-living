@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Tablet Lead Form | Comfort Care Senior Living</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2311233a'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='20' fill='%23e7d2a5' font-family='Georgia'%3ECC%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/tablet-form.css">
+  </head>
+  <body class="tablet-body">
+    <main class="tablet-shell">
+      <section class="tablet-card">
+        <header class="tablet-header">
+          <a class="tablet-brand" href="/" aria-label="Comfort Care home">
+            <span class="brand-mark">CC</span>
+            <span>Comfort Care<br><small>Senior Living</small></span>
+          </a>
+          <div>
+            <p class="eyebrow">Inquiry Packet</p>
+            <h1>New Family Inquiry</h1>
+            <p data-location-label>Tablet form</p>
+          </div>
+        </header>
+
+        <div class="packet-strip" aria-label="Inquiry steps">
+          <span><i data-lucide="clipboard-pen"></i>Visitor details</span>
+          <span><i data-lucide="map-pin"></i>Community interest</span>
+          <span><i data-lucide="heart-handshake"></i>Care needs</span>
+        </div>
+
+        <form class="tablet-form" data-tablet-form>
+          <label class="tablet-location">Location
+            <select name="location" data-location-input required>
+              <option value="">Choose location</option>
+              <option value="August Haus Comfort Care">August Haus Comfort Care</option>
+              <option value="Bay City Comfort Care">Bay City Comfort Care</option>
+              <option value="Bavarian Comfort Care">Bavarian Comfort Care</option>
+              <option value="Big Rapids Fields Comfort Care">Big Rapids Fields Comfort Care</option>
+              <option value="Brighton Comfort Care">Brighton Comfort Care</option>
+              <option value="Chesaning Comfort Care">Chesaning Comfort Care</option>
+              <option value="Livonia Comfort Care">Livonia Comfort Care</option>
+              <option value="Marshall Comfort Care">Marshall Comfort Care</option>
+              <option value="Mount Pleasant Comfort Care">Mount Pleasant Comfort Care</option>
+              <option value="Reed City Fields Comfort Care">Reed City Fields Comfort Care</option>
+              <option value="Shields/Saginaw Comfort Care">Shields/Saginaw Comfort Care</option>
+              <option value="Shelby Comfort Care">Shelby Comfort Care</option>
+              <option value="Vassar Comfort Care">Vassar Comfort Care</option>
+            </select>
+          </label>
+
+          <label>Full Name
+            <input name="fullName" autocomplete="name" required placeholder="Resident or family member name">
+          </label>
+
+          <label>Phone
+            <input name="phone" autocomplete="tel" inputmode="tel" required placeholder="(555) 555-5555">
+          </label>
+
+          <label>Email
+            <input name="email" type="email" autocomplete="email" placeholder="Optional">
+          </label>
+
+          <label>Relationship to Resident
+            <select name="relationshipToResident">
+              <option value="">Choose one</option>
+              <option value="Self">Self</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Adult child">Adult child</option>
+              <option value="Sibling">Sibling</option>
+              <option value="Friend">Friend</option>
+              <option value="Professional referral">Professional referral</option>
+            </select>
+          </label>
+
+          <label>Care Type
+            <select name="careType">
+              <option value="Not sure yet">Not sure yet</option>
+              <option value="Assisted Living">Assisted Living</option>
+              <option value="Memory Care">Memory Care</option>
+              <option value="Independent Living">Independent Living</option>
+              <option value="Continuum of Care">Continuum of Care</option>
+            </select>
+          </label>
+
+          <label>Move-In Timeline
+            <select name="moveTimeline">
+              <option value="">Choose timeline</option>
+              <option value="Urgent / ASAP">Urgent / ASAP</option>
+              <option value="Within 30 days">Within 30 days</option>
+              <option value="30-60 days">30-60 days</option>
+              <option value="60+ days">60+ days</option>
+              <option value="Researching options">Researching options</option>
+            </select>
+          </label>
+
+          <label>Payment Type
+            <select name="paymentType">
+              <option value="">Choose one</option>
+              <option value="Private pay">Private pay</option>
+              <option value="Medicaid waiver">Medicaid waiver</option>
+              <option value="Long-term care insurance">Long-term care insurance</option>
+              <option value="Veterans benefits">Veterans benefits</option>
+              <option value="Unsure">Unsure</option>
+            </select>
+          </label>
+
+          <label>Preferred Contact
+            <select name="preferredContactMethod">
+              <option value="">Choose one</option>
+              <option value="Phone call">Phone call</option>
+              <option value="Text message">Text message</option>
+              <option value="Email">Email</option>
+            </select>
+          </label>
+
+          <label>Best Time to Contact
+            <select name="bestContactTime">
+              <option value="">Choose one</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Evening">Evening</option>
+              <option value="Anytime">Anytime</option>
+            </select>
+          </label>
+
+          <label class="tablet-wide">Current Situation
+            <textarea name="currentSituation" rows="4" placeholder="Living at home, hospital discharge, rehab, caregiver burnout, safety concern..."></textarea>
+          </label>
+
+          <label class="tablet-notes">Notes
+            <textarea name="notes" rows="5" placeholder="Care needs, timeline, family context, questions..."></textarea>
+          </label>
+
+          <input name="source" type="hidden" value="Tablet">
+
+          <button class="btn btn-primary tablet-submit" type="submit">
+            <i data-lucide="send"></i>
+            <span data-submit-label>Save Lead</span>
+          </button>
+
+          <output class="tablet-status" data-tablet-status aria-live="polite"></output>
+          <p class="tablet-privacy">Your information is encrypted and securely stored. We never share your data.</p>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="/tablet-form.js"></script>
+  </body>
+</html>

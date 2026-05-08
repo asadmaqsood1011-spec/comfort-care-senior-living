@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Comfort Care Operations CRM</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b231d'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='20' fill='%23e6c681' font-family='Georgia'%3ECC%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-coord1">
+  </head>
+  <body>
+    <main class="auth-screen" data-auth-screen>
+      <section class="login-card">
+        <div class="brand-row">
+          <span class="brand-mark">CC</span>
+          <div>
+            <p>Comfort Care Senior Living</p>
+            <h1>Operations CRM</h1>
+          </div>
+        </div>
+        <form data-login-form class="login-form">
+          <label>Email<input name="email" type="email" autocomplete="username" required></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+          <button type="submit">Log In</button>
+          <output data-login-status></output>
+        </form>
+        <p class="fine-print">Supabase Auth protected. Location access is enforced by role and location assignment.</p>
+      </section>
+    </main>
+
+    <main class="app-shell" data-app-shell hidden>
+      <aside class="sidebar">
+        <a class="side-brand" href="/">
+          <span class="brand-mark">CC</span>
+          <span><strong>Comfort Care</strong><small>Operations</small></span>
+        </a>
+
+        <section class="location-card">
+          <label>Location scope</label>
+          <select data-location-switcher></select>
+          <small data-role-label></small>
+        </section>
+
+        <nav class="side-nav">
+          <small>Operate</small>
+          <button class="active" data-view="dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+          <button data-view="leads"><i data-lucide="users"></i>Leads</button>
+          <button data-view="tours"><i data-lucide="calendar-days"></i>Tours</button>
+          <button data-view="followups"><i data-lucide="bell-ring"></i>Follow-ups</button>
+          <button data-view="tasks"><i data-lucide="list-checks"></i>Tasks</button>
+          <button data-view="residents"><i data-lucide="bed-double"></i>Residents</button>
+          <button data-view="checkins"><i data-lucide="clipboard-check"></i>Check-Ins</button>
+          <small>Control</small>
+          <button data-view="activity"><i data-lucide="history"></i>Activity</button>
+          <button data-view="documents"><i data-lucide="folder-open"></i>Documents</button>
+          <button data-view="reports"><i data-lucide="bar-chart-3"></i>Reports</button>
+          <button data-view="users" data-super-only><i data-lucide="shield-check"></i>Users</button>
+        </nav>
+
+        <section class="quick-links">
+          <a href="/tablet-form" target="_blank" rel="noopener">Tablet intake</a>
+          <a href="/check-in" target="_blank" rel="noopener">Facility check-in</a>
+          <a href="/admin" target="_blank" rel="noopener">Legacy admin</a>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Production v2</p>
+            <h1 data-page-title>Dashboard</h1>
+          </div>
+          <div class="top-actions">
+            <button class="ghost" data-refresh><i data-lucide="refresh-cw"></i>Refresh</button>
+            <a class="ghost" href="/" target="_blank" rel="noopener"><i data-lucide="home"></i>View site</a>
+            <button class="ghost" data-logout><i data-lucide="log-out"></i>Log out</button>
+          </div>
+        </header>
+
+        <output class="global-status" data-global-status></output>
+
+        <section class="coordination-strip" data-coordination-strip aria-live="polite">
+          <header class="coord-strip-head">
+            <div>
+              <p class="eyebrow">Live coordination</p>
+              <strong>Now &middot; Next 4h &middot; Overdue</strong>
+            </div>
+            <span class="coord-tick" data-coord-tick title="Live ticker"><span class="coord-pulse"></span>Live</span>
+          </header>
+          <div class="coord-cols">
+            <section class="coord-col coord-col-now">
+              <div class="coord-col-head"><strong>Now</strong><span data-coord-now-count>0</span></div>
+              <div class="coord-list" data-coord-now></div>
+            </section>
+            <section class="coord-col coord-col-next">
+              <div class="coord-col-head"><strong>Next 4h</strong><span data-coord-next-count>0</span></div>
+              <div class="coord-list" data-coord-next></div>
+            </section>
+            <section class="coord-col coord-col-overdue">
+              <div class="coord-col-head"><strong>Overdue</strong><span data-coord-overdue-count>0</span></div>
+              <div class="coord-list" data-coord-overdue></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view active" data-panel="dashboard">
+          <article class="panel intelligence-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Operational intelligence</p>
+                <h2>Live workflow signals</h2>
+                <p class="helper-text" data-intelligence-mode>Deterministic monitoring from leads, tours, follow-ups, activity, and occupancy.</p>
+              </div>
+              <div class="panel-actions">
+                <button class="ghost" data-intelligence-digest><i data-lucide="sparkles"></i>Manager digest</button>
+                <button data-intelligence-scan><i data-lucide="radar"></i>Run scan</button>
+              </div>
+            </div>
+            <div class="intelligence-brief" data-intelligence-brief></div>
+            <section class="operational-focus" data-operational-focus></section>
+            <div class="mission-control-grid">
+              <div class="intelligence-zones" data-intelligence-zones></div>
+              <aside class="operational-pulse">
+                <div class="pulse-head">
+                  <div><p class="eyebrow">Operational pulse</p><strong>Live workflow heartbeat</strong></div>
+                  <span data-pulse-count>0</span>
+                </div>
+                <div class="pulse-list" data-operational-pulse></div>
+              </aside>
+            </div>
+            <div class="intelligence-grid" data-intelligence-feed hidden></div>
+            <div class="queue-strip" data-priority-queues></div>
+            <div class="predictive-grid" data-predictive-cards></div>
+          </article>
+          <div class="metric-grid" data-metrics></div>
+          <div class="two-col">
+            <article class="panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Location comparison</p><h2>Performance</h2></div>
+              </div>
+              <div class="location-comparison" data-location-comparison></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Audit trail</p><h2>Recent activity</h2></div>
+              </div>
+              <div class="timeline" data-recent-activity></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-panel="leads">
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Admissions CRM</p><h2>Leads</h2></div>
+              <div class="panel-actions">
+                <button class="ghost" data-export-leads><i data-lucide="download"></i>Export CSV</button>
+                <button data-open-create-lead><i data-lucide="user-plus"></i>Add lead</button>
+              </div>
+            </div>
+            <div class="filters">
+              <input data-lead-search placeholder="Search name, email, phone">
+              <select data-lead-status-filter>
+                <option value="">All statuses</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="tour_scheduled">Tour scheduled</option>
+                <option value="move_in">Move in</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div class="table-card">
+              <table>
+                <thead><tr><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody data-leads-table></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="checkins">
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Facility operations</p><h2>Visitor Check-Ins</h2></div>
+              <a class="ghost" href="/check-in" target="_blank" rel="noopener"><i data-lucide="clipboard-check"></i>Open check-in</a>
+            </div>
+            <div class="cards-list" data-checkins-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="tours">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Tour calendar</p><h2>Scheduled Tours</h2></div></div>
+            <form class="inline-form" data-tour-form>
+              <select name="leadId" data-tour-lead required></select>
+              <input name="scheduledAt" type="datetime-local" required>
+              <input name="notes" placeholder="Tour notes">
+              <button type="submit"><i data-lucide="calendar-plus"></i>Schedule</button>
+            </form>
+            <div class="cards-list" data-tours-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="followups">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">No missed follow-up</p><h2>Follow-ups</h2></div></div>
+            <form class="inline-form" data-followup-form>
+              <select name="leadId" data-followup-lead required></select>
+              <input name="dueAt" type="datetime-local" required>
+              <input name="note" placeholder="Reminder note">
+              <button type="submit"><i data-lucide="bell-plus"></i>Add</button>
+            </form>
+            <div class="cards-list" data-followups-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="tasks">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Staff accountability</p><h2>Tasks</h2></div></div>
+            <form class="inline-form" data-task-form>
+              <input name="title" placeholder="Task title" required>
+              <input name="dueAt" type="datetime-local">
+              <select name="status"><option value="todo">To do</option><option value="in_progress">In progress</option><option value="done">Done</option></select>
+              <button type="submit"><i data-lucide="plus"></i>Add task</button>
+            </form>
+            <div class="cards-list" data-tasks-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="residents">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Operations</p><h2>Residents</h2></div></div>
+            <form class="inline-form" data-resident-form>
+              <select name="leadId" data-resident-lead><option value="">No linked lead</option></select>
+              <input name="fullName" placeholder="Resident name" required>
+              <input name="roomNumber" placeholder="Room">
+              <input name="moveInDate" type="date">
+              <button type="submit"><i data-lucide="bed-double"></i>Add resident</button>
+            </form>
+            <div class="cards-list" data-residents-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="activity">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Audit-style history</p><h2>Activity Timeline</h2></div></div>
+            <div class="timeline large" data-activity-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="documents">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Supabase Storage</p><h2>Documents</h2></div></div>
+            <form class="inline-form" data-document-form>
+              <input name="file" type="file" required>
+              <select name="entityType"><option value="location">Location</option><option value="lead">Lead</option><option value="resident">Resident</option></select>
+              <input name="documentType" placeholder="Document type">
+              <button type="submit"><i data-lucide="upload"></i>Upload</button>
+            </form>
+            <div class="cards-list" data-documents-list></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="reports">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Owner visibility</p><h2>Reports</h2></div></div>
+            <div class="chart-grid" data-report-grid></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="users">
+          <article class="panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Super Admin</p><h2>Users and Location Access</h2></div>
+              <button data-open-create-user><i data-lucide="user-cog"></i>Add user</button>
+            </div>
+            <div class="cards-list" data-users-list></div>
+          </article>
+        </section>
+      </section>
+
+      <div class="toast-stack" data-toast-stack aria-live="polite"></div>
+    </main>
+
+    <dialog class="modal" data-create-lead-modal>
+      <form class="modal-card" data-create-lead-form>
+        <header><h2>Add Lead</h2><button type="button" data-close-create-lead><i data-lucide="x"></i></button></header>
+        <label>Location<select name="locationId" data-create-lead-location required></select></label>
+        <label>Full name<input name="fullName" required></label>
+        <label>Phone<input name="phone" required></label>
+        <label>Email<input name="email" type="email"></label>
+        <label>Care type<select name="careType"><option>Not sure yet</option><option>Assisted Living</option><option>Memory Care</option><option>Independent Living</option></select></label>
+        <label>Notes<textarea name="notes" rows="4"></textarea></label>
+        <button type="submit">Create lead</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-create-user-modal>
+      <form class="modal-card" data-create-user-form>
+        <header><h2>Add User</h2><button type="button" data-close-create-user><i data-lucide="x"></i></button></header>
+        <label>Full name<input name="fullName" required></label>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Temporary password<input name="password" type="password" minlength="8" required></label>
+        <label>Role<select name="role" required>
+          <option value="staff">Staff User</option>
+          <option value="location_admin">Location Admin</option>
+          <option value="regional_manager">Regional Manager</option>
+          <option value="super_admin">Super Admin / Owner</option>
+        </select></label>
+        <label>Primary location<select name="locationId" data-create-user-location required></select></label>
+        <p class="helper-text">Super admins can see every location. Other users are scoped to the selected location first; more locations can be added later.</p>
+        <button type="submit">Create user</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal lead-modal" data-lead-detail-modal>
+      <section class="modal-card lead-detail-card">
+        <header><h2 data-detail-name>Lead</h2><button type="button" data-close-lead-detail><i data-lucide="x"></i></button></header>
+        <div class="detail-grid" data-detail-meta></div>
+        <label>Internal notes<textarea data-detail-notes rows="5" placeholder="Add internal notes..."></textarea></label>
+        <div class="modal-actions">
+          <button type="button" data-save-lead-notes><i data-lucide="save"></i>Save notes</button>
+          <button class="ghost" type="button" data-detail-followup><i data-lucide="bell-plus"></i>Add follow-up</button>
+        </div>
+        <output data-detail-status></output>
+        <article class="email-composer">
+          <p class="eyebrow">Human-reviewed email</p>
+          <div class="modal-actions">
+            <button class="ghost" type="button" data-generate-lead-email><i data-lucide="wand-sparkles"></i>Generate draft</button>
+            <button type="button" data-send-lead-email><i data-lucide="send"></i>Send email</button>
+          </div>
+          <label>Subject<input data-detail-email-subject placeholder="Email subject"></label>
+          <label>Email body<textarea data-detail-email-body rows="7" placeholder="Generate or write a message..."></textarea></label>
+          <p class="helper-text">Drafts can use placeholders like {{first_name}}, {{community}}, and {{care_type}}. Review before sending.</p>
+        </article>
+        <div class="detail-columns">
+          <article>
+            <p class="eyebrow">Timeline</p>
+            <div class="timeline" data-detail-activity></div>
+          </article>
+          <article>
+            <p class="eyebrow">Email History</p>
+            <div class="cards-list" data-detail-emails></div>
+          </article>
+        </div>
+      </section>
+    </dialog>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/admin-v2.js?v=20260508-coord1"></script>
+  </body>
+</html>

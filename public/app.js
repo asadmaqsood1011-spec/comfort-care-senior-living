@@ -117,6 +117,7 @@ const communities = [
     address: "51831 Van Dyke Ave, Shelby Township, MI 48315, US",
     phone: "(586) 933-5594",
     image: "/assets/communities/shelby-apfm.jpg",
+    virtualTourUrl: "https://my.matterport.com/show/?m=VFCsQkPt5XQ&ts=1",
     careOptions: ["Assisted Living", "Memory Care", "MemoryVille", "Independent Living"],
     description: "A country club-style Shelby community with no costly entrance fees, home-like warmth, transparent pricing, and specialized senior services.",
     highlights: ["No costly entrance fees", "Spa & salon", "Cinema", "Shopping trips", "Chef-prepared meals", "24/7 Housekeeping"]
@@ -234,14 +235,231 @@ const communityEnhancements = {
   }
 };
 
+const officialCommunityGalleries = {
+  "August Haus Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-common-area-2-400x284-1.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-common-area-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-double-bed-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-kitchen-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-open-dining-area-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-private-dining-room-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-resident-room-bed-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/august-haus-bathroom-400x284-1-min.jpg"
+  ],
+  "Bavarian Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-bridgeport.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/royal-comfort-care.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/nursing-home-bridgeport.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/frankenmuth-nursing-home.jpg"
+  ],
+  "Bay City Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/nursing-homes-in-bay-city-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/independent-living-bay-city-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/bay-city-mi-assisted-living-facilities.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/bay-city-assisted-living.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-essexville-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-bay-city.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-bay-city-michigan.jpg"
+  ],
+  "Big Rapids Fields Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_92391-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9230-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0856-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0227-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0223-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0220-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0219-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_0171-400x284-1-min.jpg"
+  ],
+  "Chesaning Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-9-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-1-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-8-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-7-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-6-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-5-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-3-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/Ches-CC-In-2-400x284-1-min.jpg"
+  ],
+  "Livonia Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/memory-care-livonia.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-livonia.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/independent-senior-living-livonia-mi.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/new-senior-apartments-in-livonia-mi.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/senior-apartments-livonia-mi.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/livonia-assisted-living.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/livonia-nursing-home.png",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/senior-living-livonia.png"
+  ],
+  "Marshall Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9482-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9477-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9484-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9471-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9465-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9458-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9448-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/BO2A9445-400x284-1-min.jpg"
+  ],
+  "Mount Pleasant Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9994-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9984-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9980-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9975-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9973-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9954-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9940-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9924-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_9907-400x284-1-min.jpg"
+  ],
+  "Reed City Fields Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_3837web-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_3800web-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_3787web-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_3782web-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_3761web-400x284-1-min.jpg"
+  ],
+  "Shields Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-facilities-in-saginaw-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-in-saginaw-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/saginaw-cinema.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/nursing-homes-saginaw-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/nursing-homes-in-saginaw.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/saginaw-nursing-homes.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/assisted-living-saginaw-mi.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/nursing-homes-in-saginaw-mi.jpg"
+  ],
+  "Shelby Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/DSC_6623_HDR-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/DSC_6556-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/DSC_6540-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/DSC_6524-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/DSC_6503-400x284-1-min.jpg"
+  ],
+  "Vassar Comfort Care": [
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2122-7-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2124-8-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2199-17-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2190-16-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2151-13-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2135-11-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2133-10-400x284-1-min.jpg",
+    "https://comfortcaresl.com/wp-content/uploads/2023/10/IMG_2131-9-400x284-1.jpg"
+  ]
+};
+
+const sharedSuitePlans = [
+  {
+    name: "Two Bedroom Suite",
+    details: "2 beds / 1 bathroom / kitchenette",
+    note: "A larger residence option for families comparing companion-style living or extra space.",
+    image: "https://comfortcaresl.com/wp-content/uploads/2023/09/Screenshot_2023-09-25_225252-removebg-preview.png"
+  },
+  {
+    name: "Grand Oriental",
+    details: "1 bed / 1 bathroom / kitchenette",
+    note: "A comfortable private suite with space for daily routines and personal furnishings.",
+    image: "https://comfortcaresl.com/wp-content/uploads/2023/09/Screenshot_2023-09-25_225225-removebg-preview.png"
+  },
+  {
+    name: "Deluxe Studio",
+    details: "1 bed / 1 bathroom / kitchenette",
+    note: "A streamlined studio layout designed for comfort, care access, and easy movement.",
+    image: "https://comfortcaresl.com/wp-content/uploads/2023/09/Screenshot_2023-09-25_225205-removebg-preview.png"
+  },
+  {
+    name: "Private Suite",
+    details: "1 bed / 1 bathroom",
+    note: "A simple private residence option for residents who want a cozy, low-maintenance room.",
+    image: "https://comfortcaresl.com/wp-content/uploads/2023/09/Screenshot_2023-09-25_225236-removebg-preview.png"
+  }
+];
+
+const communityFloorPlans = {
+  "Bavarian Comfort Care": sharedSuitePlans,
+  "Bay City Comfort Care": sharedSuitePlans,
+  "Chesaning Comfort Care": sharedSuitePlans,
+  "Shields Comfort Care": sharedSuitePlans,
+  "Vassar Comfort Care": sharedSuitePlans,
+  "Brighton Comfort Care": [
+    {
+      name: "The Serenity",
+      details: "Bedroom / living area / walk-in shower",
+      note: "Designed for mobility with generous walkways, a comfortable living zone, and an accessible bathroom."
+    },
+    {
+      name: "The Bay",
+      details: "Bedroom / seating area / kitchenette",
+      note: "Open living space with a sitting area connected to a kitchenette and a well-sized bedroom."
+    }
+  ]
+};
+
+const communityVideoTours = {
+  "August Haus Comfort Care": {
+    title: "August Haus Gaylord Virtual Tour",
+    youtubeId: "65jBPrrqZis"
+  },
+  "Bavarian Comfort Care": {
+    title: "Bavarian Comfort Care Virtual Tour",
+    youtubeId: "U3H50Nze76Y"
+  },
+  "Bay City Comfort Care": {
+    title: "Bay City Comfort Care Virtual Tour",
+    youtubeId: "iL1GmxU6bPs"
+  },
+  "Big Rapids Fields Comfort Care": {
+    title: "Big Rapids Fields Virtual Tour",
+    youtubeId: "_d5rqCePcPM"
+  },
+  "Brighton Comfort Care": {
+    title: "Brighton Comfort Care Virtual Tour",
+    youtubeId: "0s9UT60GvZM"
+  },
+  "Chesaning Comfort Care": {
+    title: "Chesaning Comfort Care Virtual Tour",
+    youtubeId: "4TofWuQxTFU"
+  },
+  "Livonia Comfort Care": {
+    title: "Livonia Comfort Care Virtual Tour",
+    youtubeId: "idf4mE_SGAo"
+  },
+  "Marshall Comfort Care": {
+    title: "Marshall Comfort Care Virtual Tour",
+    youtubeId: "SeULdDXFdXE"
+  },
+  "Mount Pleasant Comfort Care": {
+    title: "Mount Pleasant Comfort Care Virtual Tour",
+    youtubeId: "b7Jp50MdmS8"
+  },
+  "Reed City Fields Comfort Care": {
+    title: "Reed City Fields Virtual Tour",
+    youtubeId: "s4FrvQUmv4U"
+  },
+  "Shields Comfort Care": {
+    title: "Shields Comfort Care Virtual Tour",
+    youtubeId: "RYimiRnEaTw"
+  },
+  "Vassar Comfort Care": {
+    title: "Vassar Comfort Care Virtual Tour",
+    youtubeId: "884v1wmNwOA"
+  }
+};
+
 communities.forEach((community) => {
   const enhancement = communityEnhancements[community.name] || {};
+  const officialGallery = officialCommunityGalleries[community.name] || [];
+  const floorPlans = communityFloorPlans[community.name] || [];
+  const videoTour = communityVideoTours[community.name] || null;
   Object.assign(community, {
     slug: slugify(community.name),
+    image: enhancement.image || community.image,
     apfmUrl: enhancement.apfmUrl || "",
     apfmScore: enhancement.apfmScore || "",
     apfmReviewCount: enhancement.apfmReviewCount || "",
-    gallery: enhancement.gallery || [community.image]
+    gallery: uniqueImages([community.image, ...officialGallery, ...(enhancement.gallery || [])]),
+    floorPlans,
+    videoTour
   });
 });
 
@@ -258,6 +476,72 @@ const careTypes = [
   "Continuum of Care",
   "Not sure yet"
 ];
+
+const siteUrl = "https://comfort-care-senior-living.vercel.app";
+
+const careDescriptions = {
+  "Assisted Living": "Personal support with everyday routines, meals, medication reminders, activities, and a care team nearby around the clock.",
+  "Memory Care": "A secure, familiar setting with thoughtful structure for residents living with Alzheimer's, dementia, or changing cognitive needs.",
+  "MemoryVille": "Specialized memory support designed around safety, dignity, calming routines, and meaningful daily engagement.",
+  "Independent Living": "Comfortable senior living for residents who want community, amenities, meals, and fewer daily maintenance responsibilities.",
+  "Enhanced Living": "A higher-touch lifestyle option with private suites, added comfort, and coordinated support for changing needs.",
+  "Continuum of Care": "Support that can adapt over time, helping families plan ahead as care needs evolve."
+};
+
+const localAreaDetails = {
+  "August Haus Comfort Care": {
+    hospitals: ["Regional hospital and clinic access around Gaylord", "Primary care, pharmacy, and rehabilitation services nearby"],
+    area: ["Close to Gaylord shopping, dining, churches, and family visit routes", "Northern Michigan setting with quiet surroundings and everyday conveniences"]
+  },
+  "Bavarian Comfort Care": {
+    hospitals: ["Regional hospital access in the Bridgeport, Frankenmuth, Bay City, and Saginaw area", "Nearby pharmacies, primary care offices, and outpatient services"],
+    area: ["Convenient for families visiting from Bridgeport, Frankenmuth, Saginaw, and Bay City", "Peaceful residential surroundings with quick access to local services"]
+  },
+  "Bay City Comfort Care": {
+    hospitals: ["Close to Bay City regional hospital and specialty care networks", "Nearby pharmacies, primary care offices, and rehabilitation providers"],
+    area: ["Near Bay City shopping, dining, waterfront destinations, and family-friendly routes", "Designed for families comparing assisted living and memory care in Bay City, MI"]
+  },
+  "Big Rapids Fields Comfort Care": {
+    hospitals: ["Regional hospital access in the Big Rapids area", "Primary care, pharmacy, and outpatient services nearby"],
+    area: ["Convenient for families around Big Rapids, Reed City, Canadian Lakes, and Ferris State University", "Quiet setting with access to local dining, parks, and daily essentials"]
+  },
+  "Brighton Comfort Care": {
+    hospitals: ["Access to Livingston County hospital systems and nearby specialty care", "Local pharmacies, primary care, and therapy providers in the Brighton area"],
+    area: ["Convenient for families in Brighton, Howell, Hamburg, and Livingston County", "Close to shopping, dining, parks, and major routes for family visits"]
+  },
+  "Chesaning Comfort Care": {
+    hospitals: ["Regional hospital access around Chesaning, Owosso, and Saginaw", "Nearby primary care, pharmacy, and outpatient services"],
+    area: ["Country-side setting near local churches, shops, and small-town services", "A strong fit for families searching for senior living in Chesaning, MI"]
+  },
+  "Livonia Comfort Care": {
+    hospitals: ["Access to major hospital systems across Livonia and western Metro Detroit", "Nearby pharmacies, specialists, primary care, and rehabilitation providers"],
+    area: ["Convenient for families in Livonia, Plymouth, Westland, Farmington, and Redford", "Close to shopping, dining, churches, and familiar neighborhood routes"]
+  },
+  "Marshall Comfort Care": {
+    hospitals: ["Regional hospital access in Marshall and Calhoun County", "Nearby pharmacy, primary care, therapy, and outpatient services"],
+    area: ["Convenient for families around Marshall, Battle Creek, Albion, and surrounding communities", "Quiet neighborhood feel with access to downtown Marshall and daily essentials"]
+  },
+  "Mount Pleasant Comfort Care": {
+    hospitals: ["Regional hospital and specialty care access in Mount Pleasant", "Nearby pharmacies, primary care offices, and outpatient services"],
+    area: ["Convenient for families around Mount Pleasant, Shepherd, Clare, and Central Michigan University", "Close to dining, shopping, parks, and local community destinations"]
+  },
+  "Reed City Fields Comfort Care": {
+    hospitals: ["Regional hospital access in Reed City and nearby Big Rapids", "Primary care, pharmacy, and outpatient services nearby"],
+    area: ["Convenient for families in Reed City, Big Rapids, Evart, and surrounding Northern Michigan communities", "Quiet setting near local services and major travel routes"]
+  },
+  "Shields Comfort Care": {
+    hospitals: ["Access to Saginaw regional hospitals and specialty care networks", "Nearby pharmacies, primary care, and outpatient providers"],
+    area: ["Convenient for families in Shields, Saginaw, Thomas Township, and Freeland", "Close to shopping, dining, parks, and familiar local routes"]
+  },
+  "Shelby Comfort Care": {
+    hospitals: ["Access to Macomb County and Metro Detroit hospital systems", "Nearby pharmacies, primary care, specialists, and therapy services"],
+    area: ["Convenient for families in Shelby Township, Utica, Macomb, Sterling Heights, and Rochester", "Close to shopping, dining, parks, churches, and major family visit routes"]
+  },
+  "Vassar Comfort Care": {
+    hospitals: ["Regional hospital access around Vassar, Caro, Frankenmuth, Bay City, and Saginaw", "Nearby primary care, pharmacy, and outpatient services"],
+    area: ["Country-side setting convenient for families throughout Tuscola County", "A peaceful option for families searching senior living near Vassar, MI"]
+  }
+};
 
 const header = document.querySelector("[data-header]");
 const nav = document.querySelector("[data-nav]");
@@ -332,6 +616,7 @@ function renderCommunities() {
   communityGrid.innerHTML = communities.map((community, index) => `
     <article class="community-card reveal" style="--delay: ${Math.min(index * 35, 260)}ms">
       <img src="${community.image}" alt="${community.name}">
+      ${renderCommunityFeatureBadges(community, "image")}
       <div class="community-body">
         <span class="community-city">${community.city}</span>
         <h3>${community.name}</h3>
@@ -401,6 +686,7 @@ function renderCommunitySpotlight(community) {
       <p class="eyebrow">${community.city} Community</p>
       <h3>${community.name}</h3>
       <p>${community.description}</p>
+      ${renderCommunityFeatureBadges(community)}
       <div class="profile-meta">
         ${reviewPanel}
         <div class="profile-score">
@@ -425,6 +711,9 @@ function renderCommunitySpotlight(community) {
         <button class="btn btn-primary" type="button" data-community-inquiry="${community.name}">
           <i data-lucide="calendar-check"></i>Schedule ${community.city} Tour
         </button>
+        ${community.floorPlans?.length ? `<a class="btn btn-ghost" href="/communities/${community.slug}#floor-plans"><i data-lucide="layout-template"></i>Floor Plans</a>` : ""}
+        ${community.virtualTourUrl ? `<a class="btn btn-ghost" href="/communities/${community.slug}#virtual-tour"><i data-lucide="scan-eye"></i>Virtual 3D Tour</a>` : ""}
+        ${community.videoTour ? `<a class="btn btn-ghost" href="/communities/${community.slug}#video-tour"><i data-lucide="play-circle"></i>Video Tour</a>` : ""}
         <a class="btn btn-ghost" href="${directionsUrl(community.address)}" target="_blank" rel="noreferrer">
           <i data-lucide="navigation"></i>Get Directions
         </a>
@@ -442,7 +731,7 @@ function renderRoute() {
   if (communityMatch) {
     const community = communities.find((item) => item.slug === communityMatch[1]);
     if (community) {
-      showRoutePage(renderCommunityPage(community));
+      showRoutePage(renderCommunityPage(community), community);
       return;
     }
   }
@@ -465,27 +754,38 @@ function renderRoute() {
   showHomePage();
 }
 
-function showRoutePage(html) {
+function showRoutePage(html, community = null) {
   if (!routePage) return;
+  document.body.classList.add("route-active");
   [...document.querySelector("main").children].forEach((section) => {
     section.hidden = section !== routePage;
   });
   routePage.innerHTML = html;
   routePage.hidden = false;
   window.scrollTo({ top: 0, behavior: "instant" });
-  document.title = routePage.querySelector("h1")?.textContent
-    ? `${routePage.querySelector("h1").textContent} | Comfort Care Senior Living`
-    : "Comfort Care Senior Living";
+  if (community) {
+    applyCommunitySeo(community);
+  } else {
+    document.title = routePage.querySelector("h1")?.textContent
+      ? `${routePage.querySelector("h1").textContent} | Comfort Care Senior Living`
+      : "Comfort Care Senior Living";
+    setMeta("description", "Comfort Care Senior Living offers transparent, resort-like assisted living and memory care across Michigan.");
+    setCanonical(location.pathname);
+  }
   window.lucide?.createIcons();
+  if (location.hash) {
+    requestAnimationFrame(() => document.querySelector(location.hash)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 }
 
 function showHomePage() {
   if (!routePage) return;
+  document.body.classList.remove("route-active");
   [...document.querySelector("main").children].forEach((section) => {
     section.hidden = section === routePage;
   });
   routePage.innerHTML = "";
-  document.title = "Comfort Care Senior Living | The New Standard of Senior Living";
+  applyHomeSeo();
   updateActiveNav();
 }
 
@@ -501,11 +801,15 @@ function renderCommunityPage(community) {
           <p class="eyebrow">${community.city} Community</p>
           <h1>${community.name}</h1>
           <p>${community.description}</p>
+          ${renderCommunityFeatureBadges(community)}
           <div class="route-actions">
             <button class="btn btn-primary" type="button" data-community-inquiry="${community.name}">
               <i data-lucide="calendar-check"></i>Schedule a Tour
             </button>
             <a class="btn btn-ghost" href="tel:${phoneHref(community.phone)}"><i data-lucide="phone"></i>${community.phone}</a>
+            ${community.floorPlans?.length ? `<a class="btn btn-ghost" href="#floor-plans"><i data-lucide="layout-template"></i>Floor Plans</a>` : ""}
+            ${community.virtualTourUrl ? `<a class="btn btn-ghost" href="#virtual-tour"><i data-lucide="scan-eye"></i>Virtual 3D Tour</a>` : ""}
+            ${community.videoTour ? `<a class="btn btn-ghost" href="#video-tour"><i data-lucide="play-circle"></i>Video Tour</a>` : ""}
           </div>
         </div>
         <img src="${community.image}" alt="${community.name}">
@@ -515,6 +819,7 @@ function renderCommunityPage(community) {
         <article><strong>${community.careOptions.length}</strong><span>Care options</span></article>
         <article><strong>24/7</strong><span>Care team availability</span></article>
       </div>
+      ${renderSeoIntro(community)}
       <div class="route-content-grid">
         <section>
           <h2>Care and Lifestyle</h2>
@@ -526,6 +831,8 @@ function renderCommunityPage(community) {
           <div class="amenity-strip">${community.highlights.map((item) => `<span>${item}</span>`).join("")}</div>
         </section>
       </div>
+      ${renderDetailSections(community)}
+      ${renderFloorPlans(community)}
       <section class="route-gallery">
         <div class="section-heading">
           <p class="eyebrow">Gallery</p>
@@ -539,6 +846,9 @@ function renderCommunityPage(community) {
           `).join("")}
         </div>
       </section>
+      ${renderVirtualTour(community)}
+      ${renderVideoTour(community)}
+      ${renderPrivateTourPanel(community)}
       <div class="route-location">
         <div>
           <p class="eyebrow">Location</p>
@@ -550,7 +860,203 @@ function renderCommunityPage(community) {
         </a>
         ${community.apfmUrl ? `<a class="btn btn-ghost" href="${community.apfmUrl}" target="_blank" rel="noreferrer"><i data-lucide="external-link"></i>A Place for Mom</a>` : ""}
       </div>
+      ${renderCommunityStickyCta(community)}
     </div>
+  `;
+}
+
+function renderSeoIntro(community) {
+  return `
+    <section class="seo-intro-panel">
+      <p class="eyebrow">${seoCarePhrase(community)} in ${community.city}, MI</p>
+      <h2>A warmer, more transparent way to compare senior living in ${community.city}.</h2>
+      <p>${community.name} gives families a clear look at care options, included amenities, room layouts, photos, local access, and private tour next steps before making a decision.</p>
+    </section>
+  `;
+}
+
+function renderDetailSections(community) {
+  const local = localAreaDetails[community.name] || {
+    hospitals: [`Regional hospital access around ${community.city}`, "Nearby primary care, pharmacy, and outpatient services"],
+    area: [`Convenient local access for families visiting ${community.city}`, "Close to everyday services, dining, shopping, and community destinations"]
+  };
+
+  return `
+    <section class="route-detail-panel">
+      <div class="section-heading">
+        <p class="eyebrow">Community Details</p>
+        <h2>Everything families want to know before visiting.</h2>
+      </div>
+      <div class="detail-card-grid">
+        <article class="detail-card detail-card-feature">
+          <span><i data-lucide="heart-handshake"></i></span>
+          <h3>Why families choose this location</h3>
+          <p>${community.description}</p>
+          <div class="detail-chip-row">
+            ${community.highlights.slice(0, 5).map((item) => `<span>${item}</span>`).join("")}
+          </div>
+        </article>
+        <article class="detail-card">
+          <span><i data-lucide="stethoscope"></i></span>
+          <h3>Care available here</h3>
+          <div class="care-detail-list">
+            ${community.careOptions.map((care) => `
+              <div>
+                <strong>${care}</strong>
+                <p>${careDescriptions[care] || "Personalized senior living support designed around comfort, dignity, and family confidence."}</p>
+              </div>
+            `).join("")}
+          </div>
+        </article>
+        <article class="detail-card">
+          <span><i data-lucide="sparkles"></i></span>
+          <h3>What's included</h3>
+          <ul>
+            ${["Transparent pricing conversation", "Chef-prepared meals", "Activities and social programming", "Comfortable common spaces", "24/7 care team availability", "Housekeeping support"].map((item) => `<li>${item}</li>`).join("")}
+          </ul>
+        </article>
+        <article class="detail-card">
+          <span><i data-lucide="map"></i></span>
+          <h3>Nearby hospitals and local area</h3>
+          <ul>
+            ${[...local.hospitals, ...local.area].map((item) => `<li>${item}</li>`).join("")}
+          </ul>
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function renderPrivateTourPanel(community) {
+  return `
+    <section class="private-tour-panel">
+      <div>
+        <p class="eyebrow">Private Tour</p>
+        <h2>Schedule a private tour at ${community.name}.</h2>
+        <p>Walk through the community, compare available room layouts, ask about care needs, and get a transparent next-step conversation with the Comfort Care team.</p>
+      </div>
+      <div class="private-tour-actions">
+        <button class="btn btn-primary" type="button" data-community-inquiry="${community.name}">
+          <i data-lucide="calendar-check"></i>Schedule a Tour
+        </button>
+        <a class="btn btn-ghost" href="tel:${phoneHref(community.phone)}"><i data-lucide="phone"></i>${community.phone}</a>
+      </div>
+    </section>
+  `;
+}
+
+function renderCommunityFeatureBadges(community, variant = "") {
+  const badges = [
+    community.floorPlans?.length ? { icon: "layout-template", text: "Floor Plans" } : null,
+    community.virtualTourUrl ? { icon: "scan-eye", text: "Virtual 3D Tour" } : null,
+    community.videoTour ? { icon: "play-circle", text: "Video Tour" } : null
+  ].filter(Boolean);
+
+  if (!badges.length) return "";
+
+  return `
+    <div class="community-feature-badges${variant ? ` community-feature-badges--${variant}` : ""}">
+      ${badges.map((badge) => `
+        <span><i data-lucide="${badge.icon}"></i>${badge.text}</span>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderCommunityStickyCta(community) {
+  return `
+    <aside class="community-sticky-cta" aria-label="${community.name} quick actions">
+      <div>
+        <strong>${community.name}</strong>
+        <span>${community.city} | ${community.phone}</span>
+      </div>
+      <div>
+        <a class="btn btn-ghost" href="tel:${phoneHref(community.phone)}"><i data-lucide="phone"></i>Call</a>
+        ${community.floorPlans?.length ? `<a class="btn btn-ghost" href="#floor-plans"><i data-lucide="layout-template"></i>Floor Plans</a>` : ""}
+        ${community.virtualTourUrl ? `<a class="btn btn-ghost" href="#virtual-tour"><i data-lucide="scan-eye"></i>3D Tour</a>` : ""}
+        ${community.videoTour ? `<a class="btn btn-ghost" href="#video-tour"><i data-lucide="play-circle"></i>Video</a>` : ""}
+        <button class="btn btn-primary" type="button" data-community-inquiry="${community.name}">
+          <i data-lucide="calendar-check"></i>Schedule Tour
+        </button>
+      </div>
+    </aside>
+  `;
+}
+
+function renderFloorPlans(community) {
+  if (!community.floorPlans?.length) return "";
+  return `
+    <section class="floor-plan-panel" id="floor-plans">
+      <div class="section-heading">
+        <p class="eyebrow">Residence Options</p>
+        <h2>Floor plans families can compare before touring.</h2>
+      </div>
+      <div class="floor-plan-grid">
+        ${community.floorPlans.map((plan) => `
+          <article class="floor-plan-card">
+            ${plan.image ? `
+              <button class="floor-plan-media" type="button" data-lightbox-src="${plan.image}" aria-label="Open ${plan.name} floor plan">
+                <img src="${plan.image}" alt="${plan.name} floor plan" loading="lazy">
+              </button>
+            ` : `
+              <div class="floor-plan-sketch" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            `}
+            <div>
+              <h3>${plan.name}</h3>
+              <strong>${plan.details}</strong>
+              <p>${plan.note}</p>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+      <p class="floor-plan-note">Layouts and availability can vary by community. Schedule a tour for current room availability and pricing details.</p>
+    </section>
+  `;
+}
+
+function renderVirtualTour(community) {
+  if (!community.virtualTourUrl) return "";
+  return `
+    <section class="virtual-tour-panel" id="virtual-tour">
+      <div class="virtual-tour-copy">
+        <p class="eyebrow">Virtual 3D Tour</p>
+        <h2>Step inside ${community.name} before you visit.</h2>
+        <p>Explore the community layout, gathering spaces, and home-like details from your phone or computer, then schedule a private walkthrough when your family is ready.</p>
+      </div>
+      <div class="matterport-frame">
+        <iframe
+          src="${community.virtualTourUrl}"
+          title="${community.name} Matterport 3D virtual tour"
+          allow="fullscreen; xr-spatial-tracking"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+    </section>
+  `;
+}
+
+function renderVideoTour(community) {
+  if (!community.videoTour?.youtubeId) return "";
+  return `
+    <section class="video-tour-panel" id="video-tour">
+      <div class="video-tour-copy">
+        <p class="eyebrow">Video Tour</p>
+        <h2>Watch the ${community.city} community walkthrough.</h2>
+        <p>See real spaces from ${community.name}, then schedule a private visit to compare rooms, amenities, and care options in person.</p>
+      </div>
+      <div class="youtube-frame">
+        <iframe
+          src="https://www.youtube-nocookie.com/embed/${community.videoTour.youtubeId}?rel=0&modestbranding=1"
+          title="${community.videoTour.title}"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+    </section>
   `;
 }
 
@@ -693,12 +1199,119 @@ function updateActiveNav() {
   });
 }
 
+function applyHomeSeo() {
+  document.title = "Comfort Care | Assisted Living & Memory Care in Michigan";
+  setMeta("description", "Comfort Care Senior Living offers transparent, resort-like assisted living and memory care across Michigan.");
+  setMeta("og:title", "Comfort Care | Assisted Living & Memory Care in Michigan", "property");
+  setMeta("og:description", "Comfort Care Senior Living offers transparent, resort-like assisted living and memory care across Michigan.", "property");
+  setMeta("og:url", `${siteUrl}/`, "property");
+  setMeta("og:type", "website", "property");
+  setMeta("og:image", `${siteUrl}/assets/hero-lounge.png`, "property");
+  setMeta("twitter:card", "summary_large_image", "name");
+  setCanonical("/");
+  setRouteSchema({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Comfort Care Senior Living",
+    url: siteUrl,
+    description: "Comfort Care Senior Living offers transparent, resort-like assisted living and memory care across Michigan.",
+    telephone: "+15869335594",
+    areaServed: "Michigan",
+    serviceType: ["Assisted Living", "Memory Care", "Independent Living"]
+  });
+}
+
+function applyCommunitySeo(community) {
+  const title = `${seoCarePhrase(community)} in ${community.city}, MI | ${community.name}`;
+  const description = `${community.name} offers ${community.careOptions.join(", ")} in ${community.city}, Michigan with photos, floor plans, local area details, transparent next steps, and private tours.`;
+  const url = `${siteUrl}/communities/${community.slug}`;
+
+  document.title = title;
+  setMeta("description", description);
+  setMeta("og:title", title, "property");
+  setMeta("og:description", description, "property");
+  setMeta("og:url", url, "property");
+  setMeta("og:image", absoluteUrl(community.image), "property");
+  setMeta("twitter:card", "summary_large_image", "name");
+  setCanonical(`/communities/${community.slug}`);
+  setRouteSchema({
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: community.name,
+    url,
+    image: absoluteUrl(community.image),
+    telephone: community.phone,
+    address: community.address,
+    areaServed: `${community.city}, Michigan`,
+    description,
+    brand: {
+      "@type": "Brand",
+      name: "Comfort Care Senior Living"
+    },
+    knowsAbout: community.careOptions,
+    amenityFeature: community.highlights.map((highlight) => ({
+      "@type": "LocationFeatureSpecification",
+      name: highlight
+    }))
+  });
+}
+
+function setMeta(name, content, attribute = "name") {
+  if (!content) return;
+  let tag = document.head.querySelector(`meta[${attribute}="${name}"]`);
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attribute, name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+}
+
+function setCanonical(path) {
+  let link = document.head.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", "canonical");
+    document.head.appendChild(link);
+  }
+  link.setAttribute("href", `${siteUrl}${path === "/" ? "" : path}`);
+}
+
+function setRouteSchema(schema) {
+  let script = document.head.querySelector("#route-schema");
+  if (!script) {
+    script = document.createElement("script");
+    script.id = "route-schema";
+    script.type = "application/ld+json";
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(schema);
+}
+
+function seoCarePhrase(community) {
+  const hasAssisted = community.careOptions.includes("Assisted Living");
+  const hasMemory = community.careOptions.includes("Memory Care") || community.careOptions.includes("MemoryVille");
+  if (hasAssisted && hasMemory) return "Assisted Living and Memory Care";
+  if (hasAssisted) return "Assisted Living";
+  if (hasMemory) return "Memory Care";
+  return "Senior Living";
+}
+
+function absoluteUrl(value) {
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${siteUrl}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 function slugify(value) {
   return String(value || "")
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function uniqueImages(images) {
+  return [...new Set(images.filter(Boolean))];
 }
 
 function phoneHref(phone) {
@@ -721,6 +1334,8 @@ function bindLeadForms() {
 
       try {
         const payload = Object.fromEntries(new FormData(form).entries());
+        const validationError = validateLeadContact(payload);
+        if (validationError) throw new Error(validationError);
         payload.kind = form.dataset.kind || "contact";
         const response = await fetch("/api/leads", {
           method: "POST",
@@ -757,6 +1372,27 @@ function bindCounters() {
     });
   }, { threshold: 0.45 });
   counters.forEach((counter) => counterObserver.observe(counter));
+}
+
+function validateLeadContact(payload) {
+  const name = String(payload.fullName || payload.name || "").trim();
+  const phone = String(payload.phone || "").trim();
+  const email = String(payload.email || "").trim();
+  if (!name) return "Full name is required.";
+  if (!phone) return "Phone is required.";
+  if (!isValidPhone(phone)) return "Enter a valid 10-digit phone number.";
+  if (email && !isValidEmail(email)) return "Enter a valid email or leave it blank.";
+  return "";
+}
+
+function isValidPhone(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.length === 10 || (digits.length === 11 && digits.startsWith("1"));
+}
+
+function isValidEmail(value) {
+  const email = String(value || "").trim();
+  return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email) && !email.includes("..");
 }
 
 function animateCounter(counter) {

@@ -172,6 +172,12 @@ const server = http.createServer(async (req, res) => {
       return handleLeadStatusUpdate(req, res, Number(statusMatch[1]));
     }
 
+    const notesMatch = url.pathname.match(/^\/api\/admin\/leads\/(\d+)\/notes$/);
+    if (notesMatch && req.method === "POST") {
+      if (!isAuthenticated(req)) return sendJson(res, 401, { error: "Unauthorized" });
+      return handleLeadNotesUpdate(req, res, Number(notesMatch[1]));
+    }
+
     const deleteMatch = url.pathname.match(/^\/api\/admin\/leads\/(\d+)$/);
     if (deleteMatch && req.method === "DELETE") {
       if (!isAuthenticated(req)) return sendJson(res, 401, { error: "Unauthorized" });
@@ -187,6 +193,10 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && url.pathname === "/admin") {
       return serveFile(res, path.join(PUBLIC_DIR, "admin.html"));
+    }
+
+    if (req.method === "GET" && url.pathname === "/tablet-form") {
+      return serveFile(res, path.join(PUBLIC_DIR, "tablet-form.html"));
     }
 
     if (req.method === "GET" && url.pathname === "/robots.txt") {
@@ -361,6 +371,13 @@ async function handleLeadStatusUpdate(req, res, id) {
   const status = clean(body.status || "");
   if (!VALID_STATUSES.has(status)) return sendJson(res, 422, { error: "Invalid status." });
   await Lead.update({ status }, { where: { id } });
+  sendJson(res, 200, { ok: true });
+}
+
+async function handleLeadNotesUpdate(req, res, id) {
+  const body = await readJson(req);
+  const notes = clean(body.notes || "").slice(0, 2000);
+  await Lead.update({ message: notes }, { where: { id } });
   sendJson(res, 200, { ok: true });
 }
 

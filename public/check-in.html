@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>Facility Check-In | Comfort Care Senior Living</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2311233a'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='20' fill='%23e7d2a5' font-family='Georgia'%3ECC%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/tablet-form.css">
+    <link rel="stylesheet" href="/check-in.css">
+  </head>
+  <body class="tablet-body checkin-body">
+    <main class="tablet-shell">
+      <section class="tablet-card checkin-card">
+        <header class="tablet-header">
+          <a class="tablet-brand" href="/" aria-label="Comfort Care home">
+            <span class="brand-mark">CC</span>
+            <span>Comfort Care<br><small>Senior Living</small></span>
+          </a>
+          <div>
+            <p class="eyebrow">Facility Check-In</p>
+            <h1>Welcome In</h1>
+            <p data-checkin-location-label>Choose a Comfort Care location</p>
+          </div>
+        </header>
+
+        <div class="packet-strip" aria-label="Check-in steps">
+          <span><i data-lucide="user-check"></i>Visitor</span>
+          <span><i data-lucide="building-2"></i>Community</span>
+          <span><i data-lucide="badge-check"></i>Visit purpose</span>
+        </div>
+
+        <form class="tablet-form" data-checkin-form>
+          <label class="tablet-location">Location
+            <select name="community" data-checkin-location required>
+              <option value="">Choose location</option>
+              <option value="August Haus Comfort Care">August Haus Comfort Care</option>
+              <option value="Bay City Comfort Care">Bay City Comfort Care</option>
+              <option value="Bavarian Comfort Care">Bavarian Comfort Care</option>
+              <option value="Big Rapids Fields Comfort Care">Big Rapids Fields Comfort Care</option>
+              <option value="Brighton Comfort Care">Brighton Comfort Care</option>
+              <option value="Chesaning Comfort Care">Chesaning Comfort Care</option>
+              <option value="Livonia Comfort Care">Livonia Comfort Care</option>
+              <option value="Marshall Comfort Care">Marshall Comfort Care</option>
+              <option value="Mount Pleasant Comfort Care">Mount Pleasant Comfort Care</option>
+              <option value="Reed City Fields Comfort Care">Reed City Fields Comfort Care</option>
+              <option value="Shields/Saginaw Comfort Care">Shields/Saginaw Comfort Care</option>
+              <option value="Shelby Comfort Care">Shelby Comfort Care</option>
+              <option value="Vassar Comfort Care">Vassar Comfort Care</option>
+            </select>
+          </label>
+
+          <label>Visitor Name
+            <input name="visitorName" autocomplete="name" required placeholder="Your full name">
+          </label>
+
+          <label>Phone
+            <input name="phone" autocomplete="tel" inputmode="tel" required placeholder="(555) 555-5555">
+          </label>
+
+          <label>Email
+            <input name="email" type="email" autocomplete="email" placeholder="Optional">
+          </label>
+
+          <label>Visiting Resident / Reason
+            <input name="visitingResident" required placeholder="Resident name or appointment reason">
+          </label>
+
+          <label>Visit Purpose
+            <select name="visitPurpose">
+              <option value="Family visit">Family visit</option>
+              <option value="Tour">Tour</option>
+              <option value="Vendor">Vendor</option>
+              <option value="Healthcare provider">Healthcare provider</option>
+              <option value="Staff interview">Staff interview</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
+          <label class="tablet-notes">Notes
+            <textarea name="notes" rows="4" placeholder="Optional notes for the front desk team"></textarea>
+          </label>
+
+          <button class="btn btn-primary tablet-submit" type="submit">
+            <i data-lucide="clipboard-check"></i>
+            <span data-checkin-submit-label>Check In</span>
+          </button>
+
+          <output class="tablet-status" data-checkin-status aria-live="polite"></output>
+          <p class="tablet-privacy">This check-in is securely stored for facility operations. This is not added to the lead pipeline.</p>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="/check-in.js"></script>
+  </body>
+</html>

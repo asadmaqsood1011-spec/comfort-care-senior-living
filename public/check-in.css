@@ -1,0 +1,19 @@
+.checkin-body {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(49, 91, 77, 0.22), transparent 30%),
+    radial-gradient(circle at 86% 6%, rgba(189, 149, 87, 0.2), transparent 28%),
+    linear-gradient(135deg, #f7f1e7, #ffffff);
+}
+
+.checkin-card {
+  width: min(860px, 100%);
+}
+
+.checkin-card .tablet-header h1 {
+  font-size: clamp(3rem, 9vw, 6.4rem);
+}
+
+.checkin-card .tablet-submit {
+  background: linear-gradient(135deg, var(--green), #5d7d6f);
+  color: var(--white);
+}

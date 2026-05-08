@@ -5,3 +5,7 @@ data/
 node_modules/
 
 .vercel
+.env*.local
+
+# dev-only scripts with hardcoded credentials
+create-tables.js

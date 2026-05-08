@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="38" fill="#11233a"/>
+  <circle cx="90" cy="90" r="58" fill="#315b4d"/>
+  <path d="M90 50c18 18 35 29 35 50 0 20-15 34-35 34s-35-14-35-34c0-21 17-32 35-50Z" fill="#e7d2a5"/>
+  <text x="90" y="105" text-anchor="middle" font-family="Georgia, serif" font-size="32" font-weight="700" fill="#11233a">CC</text>
+</svg>
