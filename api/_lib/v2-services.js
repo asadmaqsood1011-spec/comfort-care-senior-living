@@ -392,6 +392,174 @@ async function getPublicTour(db, tourId, token) {
   };
 }
 
+async function callLLM(prompt, { json = false, maxTokens = 800, system = "" } = {}) {
+  const openaiKey = process.env.OPENAI_API_KEY || "";
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  const messages = [];
+  if (system) messages.push({ role: "system", content: system });
+  messages.push({ role: "user", content: prompt });
+  if (openaiKey) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+          messages,
+          temperature: 0.4,
+          max_tokens: maxTokens,
+          ...(json ? { response_format: { type: "json_object" } } : {})
+        })
+      });
+      const j = await res.json();
+      const text = j.choices?.[0]?.message?.content || "";
+      if (text) return { text, provider: "openai" };
+    } catch (err) { console.error("OpenAI failed:", err.message); }
+  }
+  if (geminiKey) {
+    try {
+      const model = process.env.GEMINI_MODEL || "gemini-1.5-flash-latest";
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: (system ? `${system}\n\n` : "") + prompt }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: maxTokens, ...(json ? { responseMimeType: "application/json" } : {}) }
+        })
+      });
+      const j = await res.json();
+      const text = j.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return { text, provider: "gemini" };
+    } catch (err) { console.error("Gemini failed:", err.message); }
+  }
+  return { text: "", provider: "none" };
+}
+
+function safeParseJson(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (_) {}
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) { try { return JSON.parse(match[0]); } catch (_) {} }
+  return null;
+}
+
+async function generateMorningBrief(db, user, locationId = "") {
+  const dashboard = await getDashboard(db, user, locationId);
+  const ops = await listOperations(db, user, locationId);
+  const now = Date.now();
+  const upcomingTours = (ops.tours || []).filter((t) => t.status === "scheduled" && new Date(t.scheduled_at).getTime() > now).slice(0, 8);
+  const overdueFollowUps = (ops.followUps || []).filter((f) => f.status === "open" && new Date(f.due_at).getTime() < now).slice(0, 8);
+  const recentLeads = (await listLeads(db, user, { locationId })).slice(0, 10);
+  const context = {
+    metrics: dashboard.metrics,
+    locationComparison: dashboard.locationComparison,
+    upcomingTours: upcomingTours.map((t) => ({ when: t.scheduled_at, lead: t.lead_id, notes: t.notes })),
+    overdueFollowUps: overdueFollowUps.map((f) => ({ due: f.due_at, lead: f.lead_id, note: f.note })),
+    recentLeads: recentLeads.map((l) => ({ name: l.full_name, status: l.status, careType: l.care_type, source: l.source, createdAt: l.created_at }))
+  };
+  const prompt = `You are an admissions operations chief-of-staff for a senior-living community. Based on this snapshot, produce the morning briefing.
+
+Snapshot:
+${JSON.stringify(context, null, 2)}
+
+Return JSON with this shape:
+{
+  "headline": "one sentence on the state of admissions",
+  "overnight": ["3 short bullets on what changed or needs attention from yesterday/overnight"],
+  "today": ["4-6 prioritized actions for today, each starting with a verb"],
+  "watch": ["2-3 things to keep an eye on this week"],
+  "celebrate": "one short sentence on a positive signal (or empty string)"
+}
+Only output JSON.`;
+  const { text, provider } = await callLLM(prompt, { json: true, maxTokens: 700 });
+  const parsed = safeParseJson(text) || { headline: "Operations are stable.", overnight: [], today: [], watch: [], celebrate: "" };
+  return { brief: parsed, provider, generatedAt: new Date().toISOString() };
+}
+
+async function generateTourPrepBrief(db, user, tourId) {
+  const tour = await getEntityById(db, "tours", tourId);
+  assertLocationAccess(user, tour.location_id);
+  if (!tour.lead_id) return { brief: { talkingPoints: [], sensitivities: [], questionsToAsk: [] }, provider: "none" };
+  const detail = await getLeadDetail(db, user, tour.lead_id);
+  const lead = detail.lead;
+  const recentEmails = (detail.emailHistory || []).slice(0, 5).map((e) => ({ subject: e.subject, snippet: String(e.body || "").slice(0, 240), at: e.created_at }));
+  const recentNotes = (detail.notes || []).slice(0, 8).map((n) => ({ body: n.body, at: n.created_at }));
+  const activity = (detail.activity || []).slice(0, 12).map((a) => ({ action: a.action, at: a.created_at }));
+  const prompt = `You are briefing an admissions counselor 15 minutes before a senior-living tour.
+
+Lead profile:
+${JSON.stringify({
+  name: lead.full_name,
+  careType: lead.care_type,
+  moveTimeline: lead.move_timeline,
+  paymentType: lead.payment_type,
+  source: lead.source,
+  notes: lead.notes_summary,
+  currentSituation: lead.current_situation
+}, null, 2)}
+
+Recent emails: ${JSON.stringify(recentEmails)}
+Recent internal notes: ${JSON.stringify(recentNotes)}
+Recent activity: ${JSON.stringify(activity)}
+
+Return JSON:
+{
+  "summary": "2-3 sentence sketch of who is touring and where they are emotionally/logistically",
+  "talkingPoints": ["4-6 specific points to mention, tailored to this family"],
+  "sensitivities": ["2-4 things to be careful about (emotional triggers, prior frustrations, unspoken concerns)"],
+  "questionsToAsk": ["3-4 open-ended questions that move the decision forward"],
+  "redFlags": ["any urgent risks (or empty array)"]
+}
+Be specific to THIS family, not generic. Avoid medical claims. Only output JSON.`;
+  const { text, provider } = await callLLM(prompt, { json: true, maxTokens: 700 });
+  const parsed = safeParseJson(text) || { summary: "Limited context available.", talkingPoints: [], sensitivities: [], questionsToAsk: [], redFlags: [] };
+  return { brief: parsed, provider, lead: { id: lead.id, name: lead.full_name }, generatedAt: new Date().toISOString() };
+}
+
+async function triageInboundMessage(db, user, body = {}) {
+  const rawText = clean(body.text || body.message || "");
+  if (!rawText) validationError("Paste the inbound message.");
+  const leadId = clean(body.leadId || "");
+  let leadContext = null;
+  if (leadId) {
+    try {
+      const detail = await getLeadDetail(db, user, leadId);
+      leadContext = { name: detail.lead.full_name, careType: detail.lead.care_type, status: detail.lead.status };
+    } catch (_) {}
+  }
+  const prompt = `Triage this inbound family message for a senior-living admissions team.
+
+Inbound message:
+"""
+${rawText}
+"""
+
+${leadContext ? `Existing lead context: ${JSON.stringify(leadContext)}` : "No existing lead context."}
+
+Return JSON:
+{
+  "summary": "1 sentence summary",
+  "intent": "tour_request|info_request|reschedule|complaint|pricing|move_in|other",
+  "urgency": "low|medium|high|critical",
+  "sentiment": "positive|neutral|concerned|frustrated|angry",
+  "extractedFields": {
+    "careType": "Memory Care|Assisted Living|Independent Living|Unknown",
+    "moveTimeline": "ASAP|1-3 months|3-6 months|6+ months|Unknown",
+    "decisionMaker": "self|spouse|adult_child|other|Unknown",
+    "budgetSignal": "any wording about budget or empty"
+  },
+  "suggestedReply": {
+    "subject": "short subject line",
+    "body": "warm, professional reply (under 150 words). Use {{first_name}} placeholder. No medical claims, no pricing promises."
+  },
+  "internalNotes": "1-2 sentence note for the activity log"
+}
+Only output JSON.`;
+  const { text, provider } = await callLLM(prompt, { json: true, maxTokens: 800 });
+  const parsed = safeParseJson(text) || { summary: rawText.slice(0, 120), intent: "other", urgency: "medium", sentiment: "neutral", extractedFields: {}, suggestedReply: { subject: "", body: "" }, internalNotes: "" };
+  return { triage: parsed, provider, generatedAt: new Date().toISOString() };
+}
+
 async function respondToPublicTour(db, tourId, token, action) {
   if (!token || token !== signTourToken(tourId)) {
     const error = new Error("Invalid or expired tour link.");
@@ -1245,5 +1413,8 @@ module.exports = {
   bulkUpdateLeads,
   getTourPublicLink,
   getPublicTour,
-  respondToPublicTour
+  respondToPublicTour,
+  generateMorningBrief,
+  generateTourPrepBrief,
+  triageInboundMessage
 };

@@ -108,6 +108,108 @@ function bindStaticEvents() {
   bindPipelineDnD();
   bindCommandPalette();
   bindBulkActions();
+  bindAiPanels();
+}
+
+function bindAiPanels() {
+  $("[data-morning-brief]")?.addEventListener("click", openMorningBrief);
+  $("[data-close-morning-brief]")?.addEventListener("click", () => $("[data-morning-brief-modal]").close());
+  $("[data-close-tour-prep]")?.addEventListener("click", () => $("[data-tour-prep-modal]").close());
+  $("[data-close-triage]")?.addEventListener("click", () => $("[data-triage-modal]").close());
+  $("[data-run-triage]")?.addEventListener("click", runTriage);
+}
+
+async function openMorningBrief() {
+  const dialog = $("[data-morning-brief-modal]");
+  const out = $("[data-morning-brief-result]");
+  out.innerHTML = `<p class="helper-text">Building today's brief...</p>`;
+  dialog.showModal();
+  try {
+    const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
+    const data = await fetchJson(`/api/v2/intelligence/morning-brief${query}`, { method: "POST", timeoutMs: 30000 });
+    const b = data.brief || {};
+    out.innerHTML = `
+      <div class="ai-section"><h3>Headline</h3><p>${escapeHtml(b.headline || "")}</p></div>
+      ${(b.overnight || []).length ? `<div class="ai-section"><h3>Overnight</h3><ul>${b.overnight.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${(b.today || []).length ? `<div class="ai-section"><h3>Today</h3><ul>${b.today.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${(b.watch || []).length ? `<div class="ai-section"><h3>Watch</h3><ul>${b.watch.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${b.celebrate ? `<div class="ai-section"><h3>Celebrate</h3><p>${escapeHtml(b.celebrate)}</p></div>` : ""}
+      <small class="helper-text">${escapeHtml(data.provider || "deterministic")} · ${formatDate(data.generatedAt)}</small>
+    `;
+    iconRefresh();
+  } catch (err) {
+    out.innerHTML = `<p class="helper-text">${escapeHtml(err.message || "Could not generate brief.")}</p>`;
+  }
+}
+
+async function openTourPrep(tourId) {
+  const dialog = $("[data-tour-prep-modal]");
+  const out = $("[data-tour-prep-result]");
+  $("[data-tour-prep-title]").textContent = "Tour prep brief";
+  out.innerHTML = `<p class="helper-text">Generating talking points...</p>`;
+  dialog.showModal();
+  try {
+    const data = await fetchJson(`/api/v2/tours/${tourId}/prep-brief`, { method: "POST", timeoutMs: 30000 });
+    const b = data.brief || {};
+    if (data.lead?.name) $("[data-tour-prep-title]").textContent = `Tour prep: ${data.lead.name}`;
+    out.innerHTML = `
+      ${b.summary ? `<div class="ai-section"><h3>Summary</h3><p>${escapeHtml(b.summary)}</p></div>` : ""}
+      ${(b.talkingPoints || []).length ? `<div class="ai-section"><h3>Talking points</h3><ul>${b.talkingPoints.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${(b.sensitivities || []).length ? `<div class="ai-section"><h3>Sensitivities</h3><ul>${b.sensitivities.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${(b.questionsToAsk || []).length ? `<div class="ai-section"><h3>Questions to ask</h3><ul>${b.questionsToAsk.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      ${(b.redFlags || []).length ? `<div class="ai-section"><h3>Red flags</h3><ul>${b.redFlags.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>` : ""}
+      <small class="helper-text">${escapeHtml(data.provider || "deterministic")} · ${formatDate(data.generatedAt)}</small>
+    `;
+    iconRefresh();
+  } catch (err) {
+    out.innerHTML = `<p class="helper-text">${escapeHtml(err.message || "Could not generate brief.")}</p>`;
+  }
+}
+
+function openTriage() {
+  const dialog = $("[data-triage-modal]");
+  $("[data-triage-input]").value = "";
+  $("[data-triage-result]").hidden = true;
+  $("[data-triage-result]").innerHTML = "";
+  dialog.showModal();
+}
+
+async function runTriage() {
+  const text = $("[data-triage-input]").value.trim();
+  if (!text) return pushToast("Paste a message first", "error");
+  const out = $("[data-triage-result]");
+  out.hidden = false;
+  out.innerHTML = `<p class="helper-text">Analyzing...</p>`;
+  try {
+    const data = await fetchJson(`/api/v2/intelligence/triage`, { method: "POST", body: { text }, timeoutMs: 30000 });
+    const t = data.triage || {};
+    const ex = t.extractedFields || {};
+    const reply = t.suggestedReply || {};
+    out.innerHTML = `
+      <div class="ai-section">
+        <div class="triage-meta">
+          <span class="ai-pill ${t.urgency === "high" || t.urgency === "critical" ? "urgent" : t.urgency === "medium" ? "warn" : ""}">${escapeHtml(t.urgency || "medium")} urgency</span>
+          <span class="ai-pill">${escapeHtml(t.intent || "other")}</span>
+          <span class="ai-pill">${escapeHtml(t.sentiment || "neutral")}</span>
+        </div>
+        <p>${escapeHtml(t.summary || "")}</p>
+      </div>
+      <div class="ai-section">
+        <h3>Extracted fields</h3>
+        <p><strong>Care type:</strong> ${escapeHtml(ex.careType || "Unknown")} &middot; <strong>Timeline:</strong> ${escapeHtml(ex.moveTimeline || "Unknown")} &middot; <strong>Decision maker:</strong> ${escapeHtml(ex.decisionMaker || "Unknown")}</p>
+        ${ex.budgetSignal ? `<p><strong>Budget signal:</strong> ${escapeHtml(ex.budgetSignal)}</p>` : ""}
+      </div>
+      <div class="ai-section">
+        <h3>Suggested reply${reply.subject ? ` &middot; <em>${escapeHtml(reply.subject)}</em>` : ""}</h3>
+        <div class="triage-reply">${escapeHtml(reply.body || "")}</div>
+      </div>
+      ${t.internalNotes ? `<div class="ai-section"><h3>Internal note</h3><p>${escapeHtml(t.internalNotes)}</p></div>` : ""}
+      <small class="helper-text">${escapeHtml(data.provider || "deterministic")} · ${formatDate(data.generatedAt)}</small>
+    `;
+    iconRefresh();
+  } catch (err) {
+    out.innerHTML = `<p class="helper-text">${escapeHtml(err.message || "Triage failed.")}</p>`;
+  }
 }
 
 function bindBulkActions() {
@@ -928,6 +1030,8 @@ function buildCmdkItems(query) {
     { kind: "action", title: "Add lead",        detail: "Create new lead",     icon: "user-plus",  run: openCreateLead },
     { kind: "action", title: "Refresh data",    detail: "Reload all panels",   icon: "refresh-cw", run: () => refreshAll() },
     { kind: "action", title: "Run intel scan",  detail: "Manual signal scan",  icon: "radar",      run: () => $("[data-intelligence-scan]").click() },
+    { kind: "action", title: "Morning brief",   detail: "AI summary for today", icon: "sun",       run: openMorningBrief },
+    { kind: "action", title: "Triage inbound",  detail: "Paste a message",     icon: "wand-sparkles", run: openTriage },
     { kind: "action", title: "Export leads CSV",detail: "Download current",    icon: "download",   run: handleLeadExport },
     { kind: "action", title: "Toggle pipeline", detail: "Switch lead view",    icon: "kanban-square", run: () => { setView("leads"); setLeadView(app.leadView === "table" ? "pipeline" : "table"); } },
     { kind: "action", title: "Log out",         detail: "End session",         icon: "log-out",    run: handleLogout }
@@ -1022,9 +1126,11 @@ function renderOperations() {
       <button class="ghost" data-tour-status="${tour.id}" data-status="no_show"><i data-lucide="circle-off"></i>No-show</button>
       <button class="ghost" data-tour-status="${tour.id}" data-status="cancelled"><i data-lucide="x-circle"></i>Cancel</button>
       <button class="ghost" data-tour-link="${tour.id}"><i data-lucide="link"></i>Family link</button>
+      <button class="ghost" data-tour-prep="${tour.id}"><i data-lucide="wand-sparkles"></i>Prep brief</button>
     </div>
   `);
   $$("[data-tour-link]").forEach((btn) => btn.addEventListener("click", () => copyTourFamilyLink(btn.dataset.tourLink)));
+  $$("[data-tour-prep]").forEach((btn) => btn.addEventListener("click", () => openTourPrep(btn.dataset.tourPrep)));
   renderCards("[data-followups-list]", app.operations.followUps, (item) => `
     <div class="card-head"><strong>${escapeHtml(leadName(item.lead_id) || "Resident follow-up")}</strong><span class="badge">${escapeHtml(item.status)}</span></div>
     <small>${formatDate(item.due_at)} · ${escapeHtml(locationName(item.location_id))}</small>

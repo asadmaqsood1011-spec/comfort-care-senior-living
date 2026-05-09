@@ -33,7 +33,10 @@ const {
   bulkUpdateLeads,
   getTourPublicLink,
   getPublicTour,
-  respondToPublicTour
+  respondToPublicTour,
+  generateMorningBrief,
+  generateTourPrepBrief,
+  triageInboundMessage
 } = require("./_lib/v2-services");
 const {
   listIntelligence,
@@ -119,6 +122,19 @@ module.exports = async (req, res) => {
 
     if (req.method === "POST" && path === "/intelligence/digest") {
       return sendJson(res, 200, await generateIntelligenceDigest(db, user, locationId));
+    }
+
+    if (req.method === "POST" && path === "/intelligence/morning-brief") {
+      return sendJson(res, 200, await generateMorningBrief(db, user, locationId));
+    }
+
+    if (req.method === "POST" && path === "/intelligence/triage") {
+      return sendJson(res, 200, await triageInboundMessage(db, user, body));
+    }
+
+    const tourPrepMatch = path.match(/^\/tours\/([^/]+)\/prep-brief$/);
+    if (req.method === "POST" && tourPrepMatch) {
+      return sendJson(res, 200, await generateTourPrepBrief(db, user, tourPrepMatch[1]));
     }
 
     const eventStatusMatch = path.match(/^\/intelligence\/events\/([^/]+)\/status$/);

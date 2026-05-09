@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-bulk1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-ai1">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -114,6 +114,7 @@
                 <p class="helper-text" data-intelligence-mode>Deterministic monitoring from leads, tours, follow-ups, activity, and occupancy.</p>
               </div>
               <div class="panel-actions">
+                <button class="ghost" data-morning-brief><i data-lucide="sun"></i>AM brief</button>
                 <button class="ghost" data-intelligence-digest><i data-lucide="sparkles"></i>Manager digest</button>
                 <button data-intelligence-scan><i data-lucide="radar"></i>Run scan</button>
               </div>
@@ -301,6 +302,36 @@
       <div class="toast-stack" data-toast-stack aria-live="polite"></div>
     </main>
 
+    <dialog class="modal" data-triage-modal>
+      <section class="modal-card">
+        <header><h2>Triage inbound message</h2><button type="button" data-close-triage><i data-lucide="x"></i></button></header>
+        <p class="helper-text">Paste an email, voicemail transcript, or chat. AI extracts intent, urgency, and drafts a tone-matched reply.</p>
+        <label>Inbound text<textarea data-triage-input rows="6" placeholder="Paste here..."></textarea></label>
+        <div class="modal-actions">
+          <button type="button" data-run-triage><i data-lucide="wand-sparkles"></i>Run triage</button>
+        </div>
+        <div class="triage-result" data-triage-result hidden></div>
+      </section>
+    </dialog>
+
+    <dialog class="modal" data-tour-prep-modal>
+      <section class="modal-card">
+        <header><h2 data-tour-prep-title>Tour prep brief</h2><button type="button" data-close-tour-prep><i data-lucide="x"></i></button></header>
+        <div class="tour-prep-result" data-tour-prep-result>
+          <p class="helper-text">Generating talking points for this family...</p>
+        </div>
+      </section>
+    </dialog>
+
+    <dialog class="modal" data-morning-brief-modal>
+      <section class="modal-card">
+        <header><h2>Morning briefing</h2><button type="button" data-close-morning-brief><i data-lucide="x"></i></button></header>
+        <div class="morning-brief-result" data-morning-brief-result>
+          <p class="helper-text">Building today's brief...</p>
+        </div>
+      </section>
+    </dialog>
+
     <dialog class="cmdk" data-cmdk>
       <div class="cmdk-card">
         <div class="cmdk-input-row">
@@ -383,6 +414,6 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-bulk1"></script>
+    <script src="/admin-v2.js?v=20260508-ai1"></script>
   </body>
 </html>
