@@ -392,6 +392,105 @@ async function getPublicTour(db, tourId, token) {
   };
 }
 
+async function getOccupancyForecast(db, user, locationId = "") {
+  const locations = await getLocations(db, user);
+  const locationIds = resolveLocationIds(user, locations, clean(locationId));
+  const [leads, residents, tours] = await Promise.all([
+    selectByLocations(db.from("leads_v2").select("id, location_id, status, care_type, updated_at"), locationIds, "location_id"),
+    selectByLocations(db.from("residents_v2").select("id, location_id, status, move_in_date"), locationIds, "location_id"),
+    selectByLocations(db.from("tours").select("id, location_id, status, scheduled_at"), locationIds, "location_id")
+  ]);
+  throwFirstError(leads, residents, tours);
+  const leadRows = leads.data || [];
+  const residentRows = residents.data || [];
+  const tourRows = tours.data || [];
+  const STAGE_PROB = { new: 0.05, contacted: 0.18, tour_scheduled: 0.4, move_in: 1, archived: 0 };
+  const activeMoveIns = residentRows.filter((r) => r.status === "active").length;
+  const projected = leadRows.reduce((sum, lead) => sum + (STAGE_PROB[lead.status] ?? 0), 0);
+  const tour30 = tourRows.filter((t) => t.status === "scheduled" && new Date(t.scheduled_at).getTime() <= Date.now() + 30 * 86400000).length;
+  return {
+    current: activeMoveIns,
+    projected30: Math.round(activeMoveIns + projected * 0.4),
+    projected60: Math.round(activeMoveIns + projected * 0.65),
+    projected90: Math.round(activeMoveIns + projected * 0.85),
+    weightedPipeline: Number(projected.toFixed(1)),
+    upcomingTours: tour30,
+    breakdown: {
+      new: leadRows.filter((l) => l.status === "new").length,
+      contacted: leadRows.filter((l) => l.status === "contacted").length,
+      tour_scheduled: leadRows.filter((l) => l.status === "tour_scheduled").length,
+      move_in: leadRows.filter((l) => l.status === "move_in").length
+    }
+  };
+}
+
+async function getReferralRoi(db, user, locationId = "") {
+  const locations = await getLocations(db, user);
+  const locationIds = resolveLocationIds(user, locations, clean(locationId));
+  const { data, error } = await selectByLocations(
+    db.from("leads_v2").select("source, status, created_at"),
+    locationIds, "location_id"
+  );
+  if (error) throw error;
+  const groups = new Map();
+  (data || []).forEach((lead) => {
+    const key = clean(lead.source) || "Unknown";
+    if (!groups.has(key)) groups.set(key, { source: key, leads: 0, moveIns: 0, tours: 0 });
+    const g = groups.get(key);
+    g.leads += 1;
+    if (lead.status === "move_in") g.moveIns += 1;
+    if (lead.status === "tour_scheduled" || lead.status === "move_in") g.tours += 1;
+  });
+  return [...groups.values()]
+    .map((g) => ({ ...g, conversionRate: g.leads ? Math.round((g.moveIns / g.leads) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.leads - a.leads);
+}
+
+async function archiveLeadWithReason(db, user, id, body = {}) {
+  const reason = clean(body.reason);
+  const competitor = clean(body.competitor);
+  const lead = await getEntityById(db, "leads_v2", id);
+  assertLocationAccess(user, lead.location_id);
+  const tag = `[LOST: ${reason || "unspecified"}${competitor ? ` | competitor: ${competitor}` : ""}]`;
+  const newNotes = `${tag}\n${lead.notes_summary || ""}`.trim();
+  const { data, error } = await db
+    .from("leads_v2")
+    .update({ status: "archived", archived_at: new Date().toISOString(), notes_summary: newNotes })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  await logActivity(db, user, lead.location_id, "lead", id, "lead_archived", { reason, competitor });
+  return data;
+}
+
+async function mergeLeads(db, user, body = {}) {
+  const primaryId = clean(body.primaryId);
+  const duplicateId = clean(body.duplicateId);
+  if (!primaryId || !duplicateId || primaryId === duplicateId) validationError("Pick two different leads.");
+  const [primary, duplicate] = await Promise.all([
+    getEntityById(db, "leads_v2", primaryId),
+    getEntityById(db, "leads_v2", duplicateId)
+  ]);
+  assertLocationAccess(user, primary.location_id);
+  assertLocationAccess(user, duplicate.location_id);
+  const merged = {};
+  const fields = ["email", "phone", "care_type", "move_timeline", "payment_type", "current_situation", "relationship_to_resident", "preferred_contact_method", "best_contact_time"];
+  fields.forEach((f) => {
+    if (clean(primary[f])) merged[f] = primary[f];
+    else if (clean(duplicate[f])) merged[f] = duplicate[f];
+  });
+  const tagsA = primary.priority_tags || [];
+  const tagsB = duplicate.priority_tags || [];
+  merged.priority_tags = [...new Set([...tagsA, ...tagsB])];
+  merged.notes_summary = [primary.notes_summary, duplicate.notes_summary].filter(Boolean).join("\n---\n");
+  const { data, error } = await db.from("leads_v2").update(merged).eq("id", primary.id).select("*").single();
+  if (error) throw error;
+  await db.from("leads_v2").update({ status: "archived", archived_at: new Date().toISOString(), duplicate_of: primary.id, duplicate_reason: "Merged into primary" }).eq("id", duplicate.id);
+  await logActivity(db, user, primary.location_id, "lead", primary.id, "lead_merged", { duplicateId: duplicate.id });
+  return { primary: data };
+}
+
 async function callLLM(prompt, { json = false, maxTokens = 800, system = "" } = {}) {
   const openaiKey = process.env.OPENAI_API_KEY || "";
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
@@ -1416,5 +1515,9 @@ module.exports = {
   respondToPublicTour,
   generateMorningBrief,
   generateTourPrepBrief,
-  triageInboundMessage
+  triageInboundMessage,
+  getOccupancyForecast,
+  getReferralRoi,
+  archiveLeadWithReason,
+  mergeLeads
 };

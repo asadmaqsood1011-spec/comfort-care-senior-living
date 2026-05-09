@@ -835,6 +835,26 @@ tr.row-selected { background: rgba(231, 199, 127, 0.07); }
 .triage-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0; }
 .triage-result, .tour-prep-result, .morning-brief-result { display: flex; flex-direction: column; gap: 0.6rem; }
 
+.forecast-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+.forecast-cell { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 0.85rem; text-align: center; }
+.forecast-cell strong { display: block; font-size: 1.7rem; font-family: "Playfair Display", Georgia, serif; color: var(--ink); }
+.forecast-cell small { display: block; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.25rem; }
+.forecast-cell.weighted { background: rgba(231,199,127,0.1); border-color: rgba(231,199,127,0.35); }
+.forecast-cell.weighted strong { color: var(--gold); }
+
+.referral-table { display: flex; flex-direction: column; gap: 0.4rem; }
+.referral-row { display: grid; grid-template-columns: minmax(0, 2fr) 1fr 1fr 1fr; gap: 0.5rem; padding: 0.6rem 0.75rem; background: rgba(255,255,255,0.04); border-radius: 8px; align-items: center; font-size: 0.86rem; }
+.referral-row.head { background: transparent; color: var(--gold); font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; padding-bottom: 0.3rem; }
+.referral-row .conv { font-weight: 700; color: var(--gold); text-align: right; }
+.referral-row .src { font-weight: 600; }
+.referral-row .num { text-align: right; }
+
+@media (max-width: 720px) {
+  .forecast-grid { grid-template-columns: repeat(2, 1fr); }
+  .referral-row { grid-template-columns: 1.5fr 1fr 1fr; }
+  .referral-row .tours { display: none; }
+}
+
 .view {
   display: none;
 }

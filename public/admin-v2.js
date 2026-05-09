@@ -8,6 +8,8 @@ const app = {
   selectedLocationId: "",
   dashboard: null,
   intelligence: null,
+  forecast: null,
+  referrals: [],
   leads: [],
   operations: { residents: [], tours: [], followUps: [], tasks: [], notes: [], documents: [], emailHistory: [] },
   checkIns: [],
@@ -109,6 +111,58 @@ function bindStaticEvents() {
   bindCommandPalette();
   bindBulkActions();
   bindAiPanels();
+  bindArchiveAndMerge();
+}
+
+function bindArchiveAndMerge() {
+  $("[data-close-archive]")?.addEventListener("click", () => $("[data-archive-modal]").close());
+  $("[data-archive-form]")?.addEventListener("submit", handleArchiveSubmit);
+  $("[data-close-merge]")?.addEventListener("click", () => $("[data-merge-modal]").close());
+  $("[data-merge-form]")?.addEventListener("submit", handleMergeSubmit);
+}
+
+let pendingArchiveLeadId = "";
+function openArchiveModal(leadId) {
+  pendingArchiveLeadId = leadId;
+  const form = $("[data-archive-form]");
+  form.reset();
+  $("[data-archive-modal]").showModal();
+}
+
+async function handleArchiveSubmit(event) {
+  event.preventDefault();
+  if (!pendingArchiveLeadId) return;
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  try {
+    await fetchJson(`/api/v2/leads/${pendingArchiveLeadId}/archive`, { method: "POST", body });
+    $("[data-archive-modal]").close();
+    pushToast("Lead archived with reason.", "success");
+    await refreshAll();
+  } catch (err) {
+    pushToast(err.message || "Could not archive.", "error");
+  }
+}
+
+function openMergeModal() {
+  const opts = app.leads.map((l) => `<option value="${l.id}">${escapeHtml(l.full_name)} · ${escapeHtml(locationName(l.location_id))}</option>`).join("");
+  $("[data-merge-primary]").innerHTML = opts;
+  $("[data-merge-duplicate]").innerHTML = opts;
+  $("[data-merge-modal]").showModal();
+}
+
+async function handleMergeSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  try {
+    await fetchJson("/api/v2/leads/merge", { method: "POST", body });
+    $("[data-merge-modal]").close();
+    pushToast("Leads merged.", "success");
+    await refreshAll();
+  } catch (err) {
+    pushToast(err.message || "Merge failed.", "error");
+  }
 }
 
 function bindAiPanels() {
@@ -389,10 +443,57 @@ async function silentRefresh() {
 async function refreshAll() {
   if (!app.session) return;
   setStatus("Refreshing...");
-  await Promise.all([loadDashboard(), loadIntelligence(), loadLeads(), loadOperations()]);
+  await Promise.all([loadDashboard(), loadIntelligence(), loadLeads(), loadOperations(), loadForecast(), loadReferralRoi()]);
   if (app.activeView === "checkins") await loadCheckIns();
   setStatus("");
   iconRefresh();
+}
+
+async function loadForecast() {
+  const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
+  try {
+    app.forecast = await fetchJson(`/api/v2/forecast/occupancy${query}`);
+    renderForecast();
+  } catch (_) {}
+}
+
+async function loadReferralRoi() {
+  const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
+  try {
+    const data = await fetchJson(`/api/v2/reports/referrals${query}`);
+    app.referrals = data.sources || [];
+    renderReferralRoi();
+  } catch (_) {}
+}
+
+function renderForecast() {
+  const target = $("[data-occupancy-forecast]");
+  if (!target) return;
+  const f = app.forecast || {};
+  target.innerHTML = `
+    <div class="forecast-cell"><strong>${f.current ?? 0}</strong><small>Current move-ins</small></div>
+    <div class="forecast-cell"><strong>${f.projected30 ?? 0}</strong><small>Projected 30d</small></div>
+    <div class="forecast-cell"><strong>${f.projected60 ?? 0}</strong><small>Projected 60d</small></div>
+    <div class="forecast-cell weighted"><strong>${f.projected90 ?? 0}</strong><small>Projected 90d</small></div>
+  `;
+}
+
+function renderReferralRoi() {
+  const target = $("[data-referral-roi]");
+  if (!target) return;
+  const rows = app.referrals || [];
+  if (!rows.length) { target.innerHTML = empty("No source data yet."); return; }
+  target.innerHTML = `
+    <div class="referral-row head"><span>Source</span><span class="num">Leads</span><span class="num tours">Tours+</span><span class="num">Conv %</span></div>
+    ${rows.slice(0, 8).map((r) => `
+      <div class="referral-row">
+        <span class="src">${escapeHtml(r.source)}</span>
+        <span class="num">${r.leads}</span>
+        <span class="num tours">${r.tours}</span>
+        <span class="conv">${r.conversionRate}%</span>
+      </div>
+    `).join("")}
+  `;
 }
 
 async function loadDashboard() {
@@ -900,6 +1001,12 @@ function renderLeads() {
 
   $$("[data-status-select]").forEach((select) => {
     select.addEventListener("change", async () => {
+      if (select.value === "archived") {
+        openArchiveModal(select.dataset.statusSelect);
+        const lead = app.leads.find((l) => l.id === select.dataset.statusSelect);
+        if (lead) select.value = lead.status;
+        return;
+      }
       await fetchJson(`/api/v2/leads/${select.dataset.statusSelect}/status`, {
         method: "PATCH",
         body: { status: select.value }
@@ -1032,6 +1139,7 @@ function buildCmdkItems(query) {
     { kind: "action", title: "Run intel scan",  detail: "Manual signal scan",  icon: "radar",      run: () => $("[data-intelligence-scan]").click() },
     { kind: "action", title: "Morning brief",   detail: "AI summary for today", icon: "sun",       run: openMorningBrief },
     { kind: "action", title: "Triage inbound",  detail: "Paste a message",     icon: "wand-sparkles", run: openTriage },
+    { kind: "action", title: "Merge leads",     detail: "Combine duplicates",  icon: "git-merge",     run: openMergeModal },
     { kind: "action", title: "Export leads CSV",detail: "Download current",    icon: "download",   run: handleLeadExport },
     { kind: "action", title: "Toggle pipeline", detail: "Switch lead view",    icon: "kanban-square", run: () => { setView("leads"); setLeadView(app.leadView === "table" ? "pipeline" : "table"); } },
     { kind: "action", title: "Log out",         detail: "End session",         icon: "log-out",    run: handleLogout }

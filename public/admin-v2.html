@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-ai1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-roi1">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -136,6 +136,16 @@
             <div class="predictive-grid" data-predictive-cards></div>
           </article>
           <div class="metric-grid" data-metrics></div>
+          <div class="two-col">
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Census forecast</p><h2>Occupancy outlook</h2></div></div>
+              <div class="forecast-grid" data-occupancy-forecast></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Marketing ROI</p><h2>Referral sources</h2></div></div>
+              <div class="referral-table" data-referral-roi></div>
+            </article>
+          </div>
           <div class="two-col">
             <article class="panel">
               <div class="panel-head">
@@ -302,6 +312,39 @@
       <div class="toast-stack" data-toast-stack aria-live="polite"></div>
     </main>
 
+    <dialog class="modal" data-archive-modal>
+      <form class="modal-card" data-archive-form>
+        <header><h2>Archive lead</h2><button type="button" data-close-archive><i data-lucide="x"></i></button></header>
+        <p class="helper-text">Capture why this lead didn't convert. Helps tighten marketing and pricing.</p>
+        <label>Reason
+          <select name="reason" required>
+            <option value="">Choose a reason…</option>
+            <option>Chose a competitor</option>
+            <option>Price / budget</option>
+            <option>Location too far</option>
+            <option>Decided to stay home</option>
+            <option>Health decline</option>
+            <option>Passed away</option>
+            <option>No response</option>
+            <option>Not a fit</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Competitor (optional)<input name="competitor" placeholder="e.g. Sunrise of Northville"></label>
+        <button type="submit">Archive lead</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-merge-modal>
+      <form class="modal-card" data-merge-form>
+        <header><h2>Merge leads</h2><button type="button" data-close-merge><i data-lucide="x"></i></button></header>
+        <p class="helper-text">The duplicate lead is archived and its data merged into the primary.</p>
+        <label>Primary lead (keep)<select name="primaryId" required data-merge-primary></select></label>
+        <label>Duplicate (archive)<select name="duplicateId" required data-merge-duplicate></select></label>
+        <button type="submit">Merge</button>
+      </form>
+    </dialog>
+
     <dialog class="modal" data-triage-modal>
       <section class="modal-card">
         <header><h2>Triage inbound message</h2><button type="button" data-close-triage><i data-lucide="x"></i></button></header>
@@ -414,6 +457,6 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-ai1"></script>
+    <script src="/admin-v2.js?v=20260508-roi1"></script>
   </body>
 </html>

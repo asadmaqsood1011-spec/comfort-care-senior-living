@@ -36,7 +36,11 @@ const {
   respondToPublicTour,
   generateMorningBrief,
   generateTourPrepBrief,
-  triageInboundMessage
+  triageInboundMessage,
+  getOccupancyForecast,
+  getReferralRoi,
+  archiveLeadWithReason,
+  mergeLeads
 } = require("./_lib/v2-services");
 const {
   listIntelligence,
@@ -194,6 +198,23 @@ module.exports = async (req, res) => {
 
     if (req.method === "POST" && path === "/leads/bulk") {
       return sendJson(res, 200, await bulkUpdateLeads(db, user, body));
+    }
+
+    if (req.method === "POST" && path === "/leads/merge") {
+      return sendJson(res, 200, await mergeLeads(db, user, body));
+    }
+
+    const archiveMatch = path.match(/^\/leads\/([^/]+)\/archive$/);
+    if (req.method === "POST" && archiveMatch) {
+      return sendJson(res, 200, { lead: await archiveLeadWithReason(db, user, archiveMatch[1], body) });
+    }
+
+    if (req.method === "GET" && path === "/forecast/occupancy") {
+      return sendJson(res, 200, await getOccupancyForecast(db, user, locationId));
+    }
+
+    if (req.method === "GET" && path === "/reports/referrals") {
+      return sendJson(res, 200, { sources: await getReferralRoi(db, user, locationId) });
     }
 
     if (req.method === "POST" && path === "/tours") {
