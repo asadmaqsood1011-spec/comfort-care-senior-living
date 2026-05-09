@@ -29,7 +29,11 @@ const {
   listUsers,
   createUserWithAccess,
   setUserActive,
-  migrateLegacyData
+  migrateLegacyData,
+  bulkUpdateLeads,
+  getTourPublicLink,
+  getPublicTour,
+  respondToPublicTour
 } = require("./_lib/v2-services");
 const {
   listIntelligence,
@@ -69,6 +73,18 @@ module.exports = async (req, res) => {
 
     if ((req.method === "GET" || req.method === "POST") && path === "/cron/intelligence-scan") {
       return handleCronIntelligenceScan(req, res);
+    }
+
+    const publicTourMatch = path.match(/^\/public\/tours\/([^/]+)$/);
+    if (req.method === "GET" && publicTourMatch) {
+      const tokenParam = String(new URL(req.url || "/api/v2", "http://localhost").searchParams.get("t") || "");
+      return sendJson(res, 200, await getPublicTour(getClient(), publicTourMatch[1], tokenParam));
+    }
+    const publicTourRespondMatch = path.match(/^\/public\/tours\/([^/]+)\/respond$/);
+    if (req.method === "POST" && publicTourRespondMatch) {
+      const respondBody = await readBody(req);
+      const tokenParam = clean(respondBody.token || new URL(req.url || "/api/v2", "http://localhost").searchParams.get("t") || "");
+      return sendJson(res, 200, await respondToPublicTour(getClient(), publicTourRespondMatch[1], tokenParam, clean(respondBody.action)));
     }
 
     const user = await requireV2User(req);
@@ -160,6 +176,10 @@ module.exports = async (req, res) => {
       return sendJson(res, 200, { lead: await updateLeadStatus(db, user, statusMatch[1], clean(body.status)) });
     }
 
+    if (req.method === "POST" && path === "/leads/bulk") {
+      return sendJson(res, 200, await bulkUpdateLeads(db, user, body));
+    }
+
     if (req.method === "POST" && path === "/tours") {
       return sendJson(res, 201, { tour: await scheduleTour(db, user, body) });
     }
@@ -167,6 +187,11 @@ module.exports = async (req, res) => {
     const tourStatusMatch = path.match(/^\/tours\/([^/]+)\/status$/);
     if (req.method === "PATCH" && tourStatusMatch) {
       return sendJson(res, 200, { tour: await updateTourStatus(db, user, tourStatusMatch[1], clean(body.status)) });
+    }
+
+    const tourLinkMatch = path.match(/^\/tours\/([^/]+)\/public-link$/);
+    if (req.method === "GET" && tourLinkMatch) {
+      return sendJson(res, 200, await getTourPublicLink(db, user, tourLinkMatch[1]));
     }
 
     if (req.method === "POST" && path === "/follow-ups") {

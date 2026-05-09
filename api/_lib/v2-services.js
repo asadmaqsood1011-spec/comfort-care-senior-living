@@ -281,7 +281,150 @@ async function updateLeadStatus(db, user, id, status) {
     .single();
   if (error) throw error;
   await logActivity(db, user, lead.location_id, "lead", id, "status_changed", { status });
+  if (status === "move_in" && lead.status !== "move_in") {
+    await seedMoveInTasks(db, user, data).catch((err) => console.error("seedMoveInTasks failed:", err.message));
+  }
   return data;
+}
+
+async function bulkUpdateLeads(db, user, body = {}) {
+  const ids = Array.isArray(body.ids) ? body.ids.map(clean).filter(Boolean) : [];
+  const status = clean(body.status);
+  if (!ids.length) validationError("No leads selected.");
+  if (!LEAD_STATUSES.has(status)) validationError("Invalid status.");
+  const { data: leads, error: fetchErr } = await db.from("leads_v2").select("id, location_id, status").in("id", ids);
+  if (fetchErr) throw fetchErr;
+  (leads || []).forEach((row) => assertLocationAccess(user, row.location_id));
+  const patch = { status, archived_at: status === "archived" ? new Date().toISOString() : null };
+  const { data: updated, error } = await db.from("leads_v2").update(patch).in("id", ids).select("id, location_id, status");
+  if (error) throw error;
+  await Promise.all((updated || []).map((row) =>
+    logActivity(db, user, row.location_id, "lead", row.id, "status_changed", { status, bulk: true })
+  ));
+  return { updated: updated?.length || 0, status };
+}
+
+const MOVE_IN_TEMPLATE = {
+  default: [
+    { title: "Welcome packet prepared", days: 0 },
+    { title: "Room setup and inspection", days: 0 },
+    { title: "Family orientation scheduled", days: 1 },
+    { title: "Move-in day point-of-contact assigned", days: 0 },
+    { title: "Initial care plan review", days: 3 }
+  ],
+  "Memory Care": [
+    { title: "Memory care safety assessment", days: 0 },
+    { title: "Wandering risk evaluation", days: 1 },
+    { title: "Behavioral baseline documented", days: 3 }
+  ],
+  "Assisted Living": [
+    { title: "Medication setup with pharmacy", days: 1 },
+    { title: "ADL assessment scheduled", days: 2 }
+  ],
+  "Independent Living": [
+    { title: "Amenity tour with resident", days: 1 }
+  ]
+};
+
+async function seedMoveInTasks(db, user, lead) {
+  const careType = clean(lead.care_type);
+  const baseTemplate = MOVE_IN_TEMPLATE.default;
+  const careTemplate = MOVE_IN_TEMPLATE[careType] || [];
+  const allTasks = [...baseTemplate, ...careTemplate];
+  const now = Date.now();
+  const rows = allTasks.map((task) => ({
+    location_id: lead.location_id,
+    lead_id: lead.id,
+    title: `[Move-in] ${task.title} — ${lead.full_name || "resident"}`,
+    task_type: "move_in",
+    status: "todo",
+    due_at: new Date(now + task.days * 24 * 60 * 60 * 1000).toISOString(),
+    created_by: user.id || null
+  }));
+  if (!rows.length) return;
+  const { error } = await db.from("staff_tasks").insert(rows);
+  if (error) throw error;
+}
+
+function tourSecret() {
+  return process.env.TOUR_LINK_SECRET || process.env.CRON_SECRET || "";
+}
+
+function signTourToken(tourId) {
+  const secret = tourSecret();
+  if (!secret) return "";
+  return crypto.createHmac("sha256", secret).update(String(tourId)).digest("hex").slice(0, 24);
+}
+
+async function getTourPublicLink(db, user, tourId) {
+  const tour = await getEntityById(db, "tours", tourId);
+  assertLocationAccess(user, tour.location_id);
+  const token = signTourToken(tour.id);
+  if (!token) {
+    const error = new Error("Server is missing TOUR_LINK_SECRET (or CRON_SECRET).");
+    error.statusCode = 500;
+    throw error;
+  }
+  return { tourId: tour.id, token, path: `/tour/${tour.id}?t=${token}` };
+}
+
+async function getPublicTour(db, tourId, token) {
+  if (!token || token !== signTourToken(tourId)) {
+    const error = new Error("Invalid or expired tour link.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const { data: tour, error } = await db.from("tours").select("*").eq("id", tourId).maybeSingle();
+  if (error) throw error;
+  if (!tour) {
+    const err = new Error("Tour not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+  const [{ data: lead }, { data: location }] = await Promise.all([
+    tour.lead_id ? db.from("leads_v2").select("full_name").eq("id", tour.lead_id).maybeSingle() : Promise.resolve({ data: null }),
+    db.from("locations").select("name, address, phone").eq("id", tour.location_id).maybeSingle()
+  ]);
+  return {
+    tour: { id: tour.id, scheduled_at: tour.scheduled_at, status: tour.status, notes: tour.notes },
+    lead: lead ? { full_name: lead.full_name } : null,
+    location: location || null
+  };
+}
+
+async function respondToPublicTour(db, tourId, token, action) {
+  if (!token || token !== signTourToken(tourId)) {
+    const error = new Error("Invalid or expired tour link.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const valid = new Set(["confirmed", "cancelled"]);
+  if (!valid.has(action)) {
+    const error = new Error("Invalid response.");
+    error.statusCode = 422;
+    throw error;
+  }
+  const { data: tour, error: fetchErr } = await db.from("tours").select("*").eq("id", tourId).maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!tour) {
+    const err = new Error("Tour not found.");
+    err.statusCode = 404;
+    throw err;
+  }
+  const patch = action === "confirmed"
+    ? { family_confirmed_at: new Date().toISOString() }
+    : { status: "cancelled" };
+  const { error: updateErr } = await db.from("tours").update(patch).eq("id", tour.id);
+  if (updateErr && !String(updateErr.message || "").includes("family_confirmed_at")) throw updateErr;
+  await db.from("activity_logs").insert({
+    location_id: tour.location_id,
+    actor_id: null,
+    entity_type: "tour",
+    entity_id: tour.id,
+    action: `tour_family_${action}`,
+    metadata: { source: "public_link" }
+  }).catch(() => {});
+  return { ok: true, action };
 }
 
 async function scheduleTour(db, user, body = {}) {
@@ -1098,5 +1241,9 @@ module.exports = {
   listUsers,
   createUserWithAccess,
   setUserActive,
-  migrateLegacyData
+  migrateLegacyData,
+  bulkUpdateLeads,
+  getTourPublicLink,
+  getPublicTour,
+  respondToPublicTour
 };

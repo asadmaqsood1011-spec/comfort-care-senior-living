@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-kanban1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-bulk1">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -175,9 +175,21 @@
                 <option value="archived">Archived</option>
               </select>
             </div>
+            <div class="bulk-bar" data-bulk-bar hidden>
+              <span><strong data-bulk-count>0</strong> selected</span>
+              <select data-bulk-status>
+                <option value="">Change status…</option>
+                <option value="contacted">Contacted</option>
+                <option value="tour_scheduled">Tour scheduled</option>
+                <option value="move_in">Move in</option>
+                <option value="archived">Archived</option>
+              </select>
+              <button data-bulk-apply><i data-lucide="check"></i>Apply</button>
+              <button class="ghost" data-bulk-clear><i data-lucide="x"></i>Clear</button>
+            </div>
             <div class="table-card" data-lead-table-wrap>
               <table>
-                <thead><tr><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                <thead><tr><th><input type="checkbox" data-bulk-select-all aria-label="Select all"></th><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
                 <tbody data-leads-table></tbody>
               </table>
             </div>
@@ -371,6 +383,6 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-kanban1"></script>
+    <script src="/admin-v2.js?v=20260508-bulk1"></script>
   </body>
 </html>

@@ -14,8 +14,11 @@ const app = {
   selectedLeadDetail: null,
   activeView: "dashboard",
   leadView: "table",
-  cmdk: { activeIndex: 0, items: [] }
+  cmdk: { activeIndex: 0, items: [] },
+  selectedLeadIds: new Set()
 };
+
+const SLA_HOURS = { new: 24, contacted: 72, tour_scheduled: 168 };
 
 const PIPELINE_COLUMNS = [
   { status: "new",            label: "New" },
@@ -104,6 +107,53 @@ function bindStaticEvents() {
   $$("[data-lead-view]").forEach((button) => button.addEventListener("click", () => setLeadView(button.dataset.leadView)));
   bindPipelineDnD();
   bindCommandPalette();
+  bindBulkActions();
+}
+
+function bindBulkActions() {
+  const selectAll = $("[data-bulk-select-all]");
+  if (selectAll) selectAll.addEventListener("change", (event) => {
+    const checked = event.target.checked;
+    app.selectedLeadIds = checked ? new Set(app.leads.map((l) => l.id)) : new Set();
+    renderLeads();
+  });
+  $("[data-bulk-apply]").addEventListener("click", handleBulkApply);
+  $("[data-bulk-clear]").addEventListener("click", () => { app.selectedLeadIds = new Set(); renderLeads(); });
+}
+
+async function handleBulkApply() {
+  const status = $("[data-bulk-status]").value;
+  if (!status) return pushToast("Pick a status first", "error");
+  const ids = [...app.selectedLeadIds];
+  if (!ids.length) return;
+  setStatus(`Updating ${ids.length} lead${ids.length === 1 ? "" : "s"}...`);
+  try {
+    await fetchJson("/api/v2/leads/bulk", { method: "POST", body: { ids, status } });
+    app.selectedLeadIds = new Set();
+    setStatus(`Updated ${ids.length} lead${ids.length === 1 ? "" : "s"}.`);
+    await refreshAll();
+  } catch (err) {
+    setStatus(err.message || "Bulk update failed.", true);
+  }
+}
+
+function leadSlaState(lead) {
+  if (!lead || lead.status === "move_in" || lead.status === "archived") return null;
+  const ref = lead.updated_at || lead.created_at;
+  if (!ref) return null;
+  const hours = (Date.now() - new Date(ref).getTime()) / 3600000;
+  const limit = SLA_HOURS[lead.status] ?? 72;
+  if (hours >= limit) return { kind: "breach", text: `SLA ${Math.round(hours - limit)}h late` };
+  if (hours >= limit * 0.66) return { kind: "warn", text: `SLA ${Math.round(limit - hours)}h left` };
+  return null;
+}
+
+function leadBadgesHtml(lead) {
+  const parts = [];
+  if (lead.duplicate_of) parts.push(`<span class="lead-badge dup" title="${escapeHtml(lead.duplicate_reason || "Possible duplicate")}">DUP</span>`);
+  const sla = leadSlaState(lead);
+  if (sla) parts.push(`<span class="lead-badge sla-${sla.kind}">${escapeHtml(sla.text)}</span>`);
+  return parts.join("");
 }
 
 function bindPipelineDnD() {
@@ -711,9 +761,12 @@ function renderLeads() {
     tbody.innerHTML = `<tr><td colspan="7">${empty("No leads found for this scope.")}</td></tr>`;
     return;
   }
-  tbody.innerHTML = app.leads.map((lead) => `
-    <tr>
-      <td><strong>${escapeHtml(lead.full_name)}</strong><br><small>${escapeHtml(lead.email || "No email")}</small></td>
+  tbody.innerHTML = app.leads.map((lead) => {
+    const selected = app.selectedLeadIds.has(lead.id);
+    return `
+    <tr class="${selected ? "row-selected" : ""}">
+      <td><input type="checkbox" class="row-select" data-row-select="${lead.id}" ${selected ? "checked" : ""}></td>
+      <td><strong>${escapeHtml(lead.full_name)}</strong>${leadBadgesHtml(lead)}<br><small>${escapeHtml(lead.email || "No email")}</small></td>
       <td>${escapeHtml(lead.phone)}</td>
       <td>${escapeHtml(locationName(lead.location_id))}</td>
       <td><span class="badge">${escapeHtml(lead.source)}</span></td>
@@ -728,7 +781,20 @@ function renderLeads() {
         <button class="ghost" data-quick-followup="${lead.id}"><i data-lucide="bell-plus"></i>Follow up</button>
       </td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
+  $$("[data-row-select]").forEach((cb) => cb.addEventListener("change", (event) => {
+    const id = event.target.dataset.rowSelect;
+    if (event.target.checked) app.selectedLeadIds.add(id);
+    else app.selectedLeadIds.delete(id);
+    renderLeads();
+  }));
+  const bar = $("[data-bulk-bar]");
+  const count = app.selectedLeadIds.size;
+  bar.hidden = count === 0;
+  $("[data-bulk-count]").textContent = count;
+  const sel = $("[data-bulk-select-all]");
+  if (sel) sel.checked = count > 0 && count === app.leads.length;
 
   $$("[data-status-select]").forEach((select) => {
     select.addEventListener("change", async () => {
@@ -801,7 +867,7 @@ function renderPipelineCard(lead) {
   return `
     <article class="pipeline-card ${aging}" draggable="true" data-lead-id="${escapeHtml(lead.id)}">
       <div class="pipeline-card-name">
-        <strong>${escapeHtml(lead.full_name || "Unnamed lead")}</strong>
+        <strong>${escapeHtml(lead.full_name || "Unnamed lead")}${leadBadgesHtml(lead)}</strong>
         <span class="pipeline-stage-age">${escapeHtml(ageText)}</span>
       </div>
       <div class="pipeline-card-meta">
@@ -919,6 +985,17 @@ function moveCmdkActive(delta) {
   if (active) active.scrollIntoView({ block: "nearest" });
 }
 
+async function copyTourFamilyLink(tourId) {
+  try {
+    const data = await fetchJson(`/api/v2/tours/${tourId}/public-link`);
+    const url = `${location.origin}${data.path}`;
+    await navigator.clipboard.writeText(url);
+    pushToast("Family link copied to clipboard", "success");
+  } catch (err) {
+    pushToast(err.message || "Could not copy link", "error");
+  }
+}
+
 function runActiveCmdk() {
   const item = app.cmdk.items[app.cmdk.activeIndex];
   if (!item) return;
@@ -944,8 +1021,10 @@ function renderOperations() {
       <button class="ghost" data-tour-status="${tour.id}" data-status="completed"><i data-lucide="check-circle"></i>Complete</button>
       <button class="ghost" data-tour-status="${tour.id}" data-status="no_show"><i data-lucide="circle-off"></i>No-show</button>
       <button class="ghost" data-tour-status="${tour.id}" data-status="cancelled"><i data-lucide="x-circle"></i>Cancel</button>
+      <button class="ghost" data-tour-link="${tour.id}"><i data-lucide="link"></i>Family link</button>
     </div>
   `);
+  $$("[data-tour-link]").forEach((btn) => btn.addEventListener("click", () => copyTourFamilyLink(btn.dataset.tourLink)));
   renderCards("[data-followups-list]", app.operations.followUps, (item) => `
     <div class="card-head"><strong>${escapeHtml(leadName(item.lead_id) || "Resident follow-up")}</strong><span class="badge">${escapeHtml(item.status)}</span></div>
     <small>${formatDate(item.due_at)} · ${escapeHtml(locationName(item.location_id))}</small>

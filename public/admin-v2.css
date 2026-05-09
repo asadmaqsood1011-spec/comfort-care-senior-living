@@ -787,6 +787,42 @@ textarea { resize: vertical; }
   color: var(--muted);
 }
 
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 1rem;
+  margin: 0.85rem 0;
+  border: 1px solid rgba(231, 199, 127, 0.4);
+  background: rgba(231, 199, 127, 0.08);
+  border-radius: 12px;
+  flex-wrap: wrap;
+  animation: coord-enter 200ms ease-out both;
+}
+
+.bulk-bar strong { color: var(--gold); }
+.bulk-bar select { background: rgba(255,255,255,0.08); color: var(--ink); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; padding: 0.55rem 0.9rem; }
+.bulk-bar button { min-height: 0; padding: 0.55rem 1rem; font-size: 0.85rem; }
+
+.lead-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+}
+
+.lead-badge.dup { background: rgba(255, 196, 87, 0.18); color: #ffd58a; border: 1px solid rgba(255, 196, 87, 0.4); }
+.lead-badge.sla-warn { background: rgba(255, 196, 87, 0.18); color: #ffd58a; }
+.lead-badge.sla-breach { background: rgba(224, 102, 95, 0.22); color: #ffb3ad; border: 1px solid rgba(224, 102, 95, 0.5); }
+
+.row-select { width: 1.1rem; height: 1.1rem; cursor: pointer; }
+tr.row-selected { background: rgba(231, 199, 127, 0.07); }
+
 .view {
   display: none;
 }

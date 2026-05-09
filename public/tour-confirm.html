@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirm Your Tour · Comfort Care Senior Living</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+    <style>
+      :root { --gold:#c7963d; --green:#0c2a24; --ink:#f9f5ec; --muted:rgba(249,245,236,0.7); }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family: Inter, system-ui, sans-serif; color: var(--ink);
+        background: radial-gradient(circle at 30% 0%, rgba(231,199,127,0.18), transparent 32rem),
+          linear-gradient(135deg,#081b23,#0b2b24 45%,#09231d); min-height:100vh;
+        display:grid; place-items:center; padding:2rem; }
+      .card { width:min(560px,100%); background: rgba(12,42,36,0.78); border:1px solid rgba(231,199,127,0.2);
+        border-radius:18px; padding:2rem; backdrop-filter: blur(20px); box-shadow: 0 24px 80px rgba(0,0,0,0.3); }
+      h1 { font-family:"Playfair Display",Georgia,serif; font-size:1.9rem; margin:0 0 0.5rem; }
+      .eyebrow { color:var(--gold); text-transform:uppercase; letter-spacing:0.08em; font-size:0.74rem; font-weight:800; margin:0; }
+      .meta { display:grid; gap:0.85rem; margin:1.5rem 0; }
+      .meta div { background: rgba(255,255,255,0.05); border-radius:10px; padding:0.85rem 1rem; }
+      .meta span { display:block; color:var(--muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em; }
+      .meta strong { font-size:1.05rem; display:block; margin-top:0.2rem; }
+      .actions { display:flex; gap:0.7rem; flex-wrap:wrap; }
+      button { flex:1; min-width:130px; padding:0.95rem 1.2rem; border-radius:999px; font-weight:700; cursor:pointer; border:1px solid transparent; }
+      .primary { background: linear-gradient(135deg,#e7c77f,#f3d995); color:#11211d; }
+      .secondary { background: rgba(255,255,255,0.06); color: var(--ink); border-color: rgba(255,255,255,0.18); }
+      .status { margin-top:1rem; min-height:1.4rem; color:var(--gold); font-weight:700; }
+      .error { color:#ffb3ad; }
+      footer { margin-top:1.4rem; font-size:0.78rem; color:var(--muted); text-align:center; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <p class="eyebrow">Comfort Care Senior Living</p>
+      <h1>Confirm your tour</h1>
+      <p class="muted" data-greeting>Loading your tour details…</p>
+      <div class="meta" data-meta hidden></div>
+      <div class="actions" data-actions hidden>
+        <button class="primary" data-confirm>Confirm tour</button>
+        <button class="secondary" data-cancel>Need to reschedule</button>
+      </div>
+      <output class="status" data-status></output>
+      <footer>Need help? Call your community directly. This link is private to your family.</footer>
+    </main>
+    <script src="/tour-confirm.js"></script>
+  </body>
+</html>

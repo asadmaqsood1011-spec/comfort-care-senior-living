@@ -56,6 +56,7 @@
     { "src": "/admin-v2/?$", "dest": "/public/admin-v2.html" },
     { "src": "/tablet-form/?$", "dest": "/public/tablet-form.html" },
     { "src": "/check-in/?$", "dest": "/public/check-in.html" },
+    { "src": "/tour/[^/]+/?$", "dest": "/public/tour-confirm.html" },
     {
       "src": "/(communities/[a-z0-9-]+|privacy|terms)/?$",
       "dest": "/public/index.html"
