@@ -112,6 +112,13 @@ function bindStaticEvents() {
   bindBulkActions();
   bindAiPanels();
   bindArchiveAndMerge();
+  $("[data-toggle-sidebar]")?.addEventListener("click", () => {
+    const shell = $("[data-app-shell]");
+    shell.classList.toggle("sidebar-collapsed");
+    try { localStorage.setItem("ccsl:sidebar", shell.classList.contains("sidebar-collapsed") ? "collapsed" : "open"); } catch (_) {}
+  });
+  $("[data-cmdk-trigger]")?.addEventListener("click", openCommandPalette);
+  if (localStorage.getItem("ccsl:sidebar") === "collapsed") $("[data-app-shell]")?.classList.add("sidebar-collapsed");
 }
 
 function bindArchiveAndMerge() {

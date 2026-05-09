@@ -230,14 +230,47 @@ textarea { resize: vertical; }
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: flex-start;
-  margin-bottom: 1.4rem;
+  align-items: center;
+  margin: -0.5rem -2rem 1.2rem;
+  padding: 0.85rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(8,27,35,0.96), rgba(8,27,35,0.85) 80%, rgba(8,27,35,0));
+  backdrop-filter: blur(14px);
 }
 
+.topbar-title { display: flex; align-items: center; gap: 0.85rem; }
+
 .topbar h1 {
-  font-size: clamp(2.7rem, 7vw, 5.7rem);
-  line-height: 0.9;
+  font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+  line-height: 1.05;
+  margin: 0;
 }
+
+.icon-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--ink);
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.icon-btn:hover { background: rgba(231,199,127,0.12); border-color: rgba(231,199,127,0.4); }
+
+.app-shell.sidebar-collapsed .sidebar { width: 72px; padding: 1.4rem 0.65rem; transition: width 220ms ease; }
+.app-shell.sidebar-collapsed .sidebar .side-brand > span,
+.app-shell.sidebar-collapsed .sidebar .location-card,
+.app-shell.sidebar-collapsed .sidebar .quick-links,
+.app-shell.sidebar-collapsed .sidebar .side-nav > small { display: none; }
+.app-shell.sidebar-collapsed .sidebar .side-nav button { justify-content: center; padding: 0.65rem; font-size: 0; gap: 0; }
+.app-shell.sidebar-collapsed .sidebar .side-nav button svg { width: 22px; height: 22px; }
+.sidebar { transition: width 220ms ease; }
 
 .top-actions {
   display: flex;
@@ -848,6 +881,22 @@ tr.row-selected { background: rgba(231, 199, 127, 0.07); }
 .referral-row .conv { font-weight: 700; color: var(--gold); text-align: right; }
 .referral-row .src { font-weight: 600; }
 .referral-row .num { text-align: right; }
+
+.dash-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-bottom: 0.85rem; justify-content: flex-end; }
+.dash-actions button { min-height: 0; padding: 0.55rem 0.95rem; font-size: 0.85rem; }
+
+.intelligence-panel.collapsible { padding-bottom: 1rem; }
+.intelligence-panel.collapsible > summary { list-style: none; cursor: pointer; padding-bottom: 0.85rem; align-items: center; }
+.intelligence-panel.collapsible > summary::-webkit-details-marker { display: none; }
+.intelligence-panel.collapsible .collapse-chevron { display: inline-grid; place-items: center; transition: transform 220ms ease; color: var(--gold); }
+.intelligence-panel.collapsible[open] .collapse-chevron { transform: rotate(180deg); }
+.intelligence-panel.collapsible:not([open]) > *:not(summary) { display: none; }
+
+.coordination-strip:has(.coord-empty:only-child) .coord-list { padding: 0.2rem 0; }
+.coordination-strip .coord-col:has(.coord-empty:only-child) { min-height: 4.5rem; }
+
+.metric-grid article.metric strong { font-size: 1.5rem; }
+.metric-grid { gap: 0.6rem; }
 
 @media (max-width: 720px) {
   .forecast-grid { grid-template-columns: repeat(2, 1fr); }

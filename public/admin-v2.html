@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-roi1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-polish1">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -68,11 +68,15 @@
 
       <section class="workspace">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Production v2</p>
-            <h1 data-page-title>Dashboard</h1>
+          <div class="topbar-title">
+            <button class="icon-btn" data-toggle-sidebar aria-label="Toggle sidebar"><i data-lucide="menu"></i></button>
+            <div>
+              <p class="eyebrow">Production v2</p>
+              <h1 data-page-title>Dashboard</h1>
+            </div>
           </div>
           <div class="top-actions">
+            <button class="ghost" data-cmdk-trigger title="Cmd/Ctrl+K"><i data-lucide="search"></i>Search</button>
             <button class="ghost" data-refresh><i data-lucide="refresh-cw"></i>Refresh</button>
             <a class="ghost" href="/" target="_blank" rel="noopener"><i data-lucide="home"></i>View site</a>
             <button class="ghost" data-logout><i data-lucide="log-out"></i>Log out</button>
@@ -106,19 +110,31 @@
         </section>
 
         <section class="view active" data-panel="dashboard">
-          <article class="panel intelligence-panel">
-            <div class="panel-head">
+          <div class="dash-actions">
+            <button class="ghost" data-morning-brief><i data-lucide="sun"></i>AM brief</button>
+            <button class="ghost" data-intelligence-digest><i data-lucide="sparkles"></i>Manager digest</button>
+            <button data-intelligence-scan><i data-lucide="radar"></i>Run scan</button>
+          </div>
+          <div class="metric-grid" data-metrics></div>
+          <div class="two-col">
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Census forecast</p><h2>Occupancy outlook</h2></div></div>
+              <div class="forecast-grid" data-occupancy-forecast></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Marketing ROI</p><h2>Referral sources</h2></div></div>
+              <div class="referral-table" data-referral-roi></div>
+            </article>
+          </div>
+          <details class="panel intelligence-panel collapsible" open>
+            <summary class="panel-head">
               <div>
                 <p class="eyebrow">Operational intelligence</p>
                 <h2>Live workflow signals</h2>
                 <p class="helper-text" data-intelligence-mode>Deterministic monitoring from leads, tours, follow-ups, activity, and occupancy.</p>
               </div>
-              <div class="panel-actions">
-                <button class="ghost" data-morning-brief><i data-lucide="sun"></i>AM brief</button>
-                <button class="ghost" data-intelligence-digest><i data-lucide="sparkles"></i>Manager digest</button>
-                <button data-intelligence-scan><i data-lucide="radar"></i>Run scan</button>
-              </div>
-            </div>
+              <span class="collapse-chevron"><i data-lucide="chevron-down"></i></span>
+            </summary>
             <div class="intelligence-brief" data-intelligence-brief></div>
             <section class="operational-focus" data-operational-focus></section>
             <div class="mission-control-grid">
@@ -134,18 +150,7 @@
             <div class="intelligence-grid" data-intelligence-feed hidden></div>
             <div class="queue-strip" data-priority-queues></div>
             <div class="predictive-grid" data-predictive-cards></div>
-          </article>
-          <div class="metric-grid" data-metrics></div>
-          <div class="two-col">
-            <article class="panel">
-              <div class="panel-head"><div><p class="eyebrow">Census forecast</p><h2>Occupancy outlook</h2></div></div>
-              <div class="forecast-grid" data-occupancy-forecast></div>
-            </article>
-            <article class="panel">
-              <div class="panel-head"><div><p class="eyebrow">Marketing ROI</p><h2>Referral sources</h2></div></div>
-              <div class="referral-table" data-referral-roi></div>
-            </article>
-          </div>
+          </details>
           <div class="two-col">
             <article class="panel">
               <div class="panel-head">
@@ -457,6 +462,6 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-roi1"></script>
+    <script src="/admin-v2.js?v=20260508-polish1"></script>
   </body>
 </html>
