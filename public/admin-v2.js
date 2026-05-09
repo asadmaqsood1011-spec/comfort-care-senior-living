@@ -12,8 +12,18 @@ const app = {
   operations: { residents: [], tours: [], followUps: [], tasks: [], notes: [], documents: [], emailHistory: [] },
   checkIns: [],
   selectedLeadDetail: null,
-  activeView: "dashboard"
+  activeView: "dashboard",
+  leadView: "table",
+  cmdk: { activeIndex: 0, items: [] }
 };
+
+const PIPELINE_COLUMNS = [
+  { status: "new",            label: "New" },
+  { status: "contacted",      label: "Contacted" },
+  { status: "tour_scheduled", label: "Tour scheduled" },
+  { status: "move_in",        label: "Move-in" },
+  { status: "archived",       label: "Archived",       muted: true }
+];
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -91,6 +101,71 @@ function bindStaticEvents() {
   $("[data-open-create-user]").addEventListener("click", openCreateUser);
   $("[data-close-create-user]").addEventListener("click", () => $("[data-create-user-modal]").close());
   $("[data-create-user-form]").addEventListener("submit", handleCreateUser);
+  $$("[data-lead-view]").forEach((button) => button.addEventListener("click", () => setLeadView(button.dataset.leadView)));
+  bindPipelineDnD();
+  bindCommandPalette();
+}
+
+function bindPipelineDnD() {
+  const pipeline = $("[data-lead-pipeline]");
+  if (!pipeline) return;
+  pipeline.addEventListener("dragover", (event) => {
+    const column = event.target.closest(".pipeline-column");
+    if (!column) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    $$(".pipeline-column.drop-target", pipeline).forEach((el) => el !== column && el.classList.remove("drop-target"));
+    column.classList.add("drop-target");
+  });
+  pipeline.addEventListener("dragleave", (event) => {
+    const column = event.target.closest(".pipeline-column");
+    if (column && !column.contains(event.relatedTarget)) column.classList.remove("drop-target");
+  });
+  pipeline.addEventListener("drop", async (event) => {
+    const column = event.target.closest(".pipeline-column");
+    if (!column) return;
+    event.preventDefault();
+    column.classList.remove("drop-target");
+    const leadId = event.dataTransfer.getData("text/plain");
+    const targetStatus = column.dataset.status;
+    if (!leadId || !targetStatus) return;
+    await moveLeadToStatus(leadId, targetStatus);
+  });
+  pipeline.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-pipeline-followup], button[data-pipeline-open]");
+    if (!button) return;
+    event.stopPropagation();
+    if (button.dataset.pipelineOpen) openLeadDetail(button.dataset.pipelineOpen);
+    else if (button.dataset.pipelineFollowup) setQuickFollowUp(button.dataset.pipelineFollowup);
+  });
+}
+
+function bindCommandPalette() {
+  const dialog = $("[data-cmdk]");
+  const input = $("[data-cmdk-input]");
+  const results = $("[data-cmdk-results]");
+  if (!dialog || !input || !results) return;
+  document.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openCommandPalette();
+    } else if (event.key === "Escape" && dialog.open) {
+      dialog.close();
+    }
+  });
+  input.addEventListener("input", renderCommandPalette);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown") { event.preventDefault(); moveCmdkActive(1); }
+    else if (event.key === "ArrowUp") { event.preventDefault(); moveCmdkActive(-1); }
+    else if (event.key === "Enter")  { event.preventDefault(); runActiveCmdk(); }
+  });
+  results.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-cmdk-index]");
+    if (!item) return;
+    app.cmdk.activeIndex = Number(item.dataset.cmdkIndex);
+    runActiveCmdk();
+  });
+  dialog.addEventListener("close", () => { input.value = ""; });
 }
 
 async function handleLogin(event) {
@@ -670,7 +745,187 @@ function renderLeads() {
   $$("[data-open-lead]").forEach((button) => {
     button.addEventListener("click", () => openLeadDetail(button.dataset.openLead));
   });
+  renderLeadPipeline();
   iconRefresh();
+}
+
+function setLeadView(view) {
+  app.leadView = view === "pipeline" ? "pipeline" : "table";
+  $$("[data-lead-view]").forEach((btn) => {
+    const on = btn.dataset.leadView === app.leadView;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  $("[data-lead-table-wrap]").hidden = app.leadView !== "table";
+  $("[data-lead-pipeline]").hidden = app.leadView !== "pipeline";
+  if (app.leadView === "pipeline") renderLeadPipeline();
+}
+
+function renderLeadPipeline() {
+  const pipeline = $("[data-lead-pipeline]");
+  if (!pipeline) return;
+  const groups = new Map(PIPELINE_COLUMNS.map((c) => [c.status, []]));
+  app.leads.forEach((lead) => {
+    if (groups.has(lead.status)) groups.get(lead.status).push(lead);
+  });
+  pipeline.innerHTML = PIPELINE_COLUMNS.map((col) => {
+    const items = groups.get(col.status) || [];
+    return `
+      <section class="pipeline-column ${col.muted ? "archived" : ""}" data-status="${col.status}">
+        <div class="pipeline-col-head"><strong>${escapeHtml(col.label)}</strong><span>${items.length}</span></div>
+        ${items.length ? items.map(renderPipelineCard).join("") : `<div class="pipeline-empty">No leads here</div>`}
+      </section>
+    `;
+  }).join("");
+  $$(".pipeline-card", pipeline).forEach((card) => {
+    card.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", card.dataset.leadId);
+      event.dataTransfer.effectAllowed = "move";
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      openLeadDetail(card.dataset.leadId);
+    });
+  });
+  iconRefresh();
+}
+
+function renderPipelineCard(lead) {
+  const stageTime = lead.updated_at || lead.created_at;
+  const rel = relativeTime(stageTime);
+  const ageMin = Math.abs(rel.diffMin || 0);
+  const aging = ageMin >= 60 * 24 * 3 ? "aging-high" : ageMin >= 60 * 24 ? "aging-warn" : "";
+  const ageText = ageMin < 60 ? `${ageMin}m in stage` : ageMin < 60 * 24 ? `${Math.round(ageMin / 60)}h in stage` : `${Math.round(ageMin / (60 * 24))}d in stage`;
+  return `
+    <article class="pipeline-card ${aging}" draggable="true" data-lead-id="${escapeHtml(lead.id)}">
+      <div class="pipeline-card-name">
+        <strong>${escapeHtml(lead.full_name || "Unnamed lead")}</strong>
+        <span class="pipeline-stage-age">${escapeHtml(ageText)}</span>
+      </div>
+      <div class="pipeline-card-meta">
+        <span>${escapeHtml(locationName(lead.location_id))}</span>
+        ${lead.care_type ? `<span>${escapeHtml(lead.care_type)}</span>` : ""}
+        ${lead.source ? `<span>${escapeHtml(lead.source)}</span>` : ""}
+      </div>
+      <div class="pipeline-card-actions">
+        <button class="ghost" data-pipeline-open="${escapeHtml(lead.id)}"><i data-lucide="panel-right-open"></i>Details</button>
+        <button class="ghost" data-pipeline-followup="${escapeHtml(lead.id)}"><i data-lucide="bell-plus"></i>Follow up</button>
+      </div>
+    </article>
+  `;
+}
+
+async function moveLeadToStatus(leadId, status) {
+  const lead = app.leads.find((l) => l.id === leadId);
+  if (!lead || lead.status === status) return;
+  const previous = lead.status;
+  lead.status = status;
+  lead.updated_at = new Date().toISOString();
+  renderLeadPipeline();
+  try {
+    await fetchJson(`/api/v2/leads/${leadId}/status`, { method: "PATCH", body: { status } });
+    pushToast(`Moved to ${statusLabel(status)}`, "success");
+    refreshAll().catch(() => {});
+  } catch (err) {
+    lead.status = previous;
+    renderLeadPipeline();
+    pushToast(err.message || "Failed to update status", "error");
+  }
+}
+
+function openCommandPalette() {
+  const dialog = $("[data-cmdk]");
+  const input = $("[data-cmdk-input]");
+  if (!dialog || !input || !app.session) return;
+  if (!dialog.open) dialog.showModal();
+  input.value = "";
+  app.cmdk.activeIndex = 0;
+  renderCommandPalette();
+  setTimeout(() => input.focus(), 0);
+}
+
+function buildCmdkItems(query) {
+  const q = query.trim().toLowerCase();
+  const views = [
+    { kind: "view", title: "Dashboard",  detail: "Operational intelligence", icon: "layout-dashboard", view: "dashboard" },
+    { kind: "view", title: "Leads",      detail: "Admissions CRM",          icon: "users",             view: "leads" },
+    { kind: "view", title: "Tours",      detail: "Tour calendar",           icon: "calendar-days",     view: "tours" },
+    { kind: "view", title: "Follow-ups", detail: "Reminders queue",         icon: "bell-ring",         view: "followups" },
+    { kind: "view", title: "Tasks",      detail: "Staff tasks",             icon: "list-checks",       view: "tasks" },
+    { kind: "view", title: "Residents",  detail: "Move-ins",                icon: "bed-double",        view: "residents" },
+    { kind: "view", title: "Activity",   detail: "Audit timeline",          icon: "history",           view: "activity" },
+    { kind: "view", title: "Reports",    detail: "Performance",             icon: "bar-chart-3",       view: "reports" }
+  ];
+  const actions = [
+    { kind: "action", title: "Add lead",        detail: "Create new lead",     icon: "user-plus",  run: openCreateLead },
+    { kind: "action", title: "Refresh data",    detail: "Reload all panels",   icon: "refresh-cw", run: () => refreshAll() },
+    { kind: "action", title: "Run intel scan",  detail: "Manual signal scan",  icon: "radar",      run: () => $("[data-intelligence-scan]").click() },
+    { kind: "action", title: "Export leads CSV",detail: "Download current",    icon: "download",   run: handleLeadExport },
+    { kind: "action", title: "Toggle pipeline", detail: "Switch lead view",    icon: "kanban-square", run: () => { setView("leads"); setLeadView(app.leadView === "table" ? "pipeline" : "table"); } },
+    { kind: "action", title: "Log out",         detail: "End session",         icon: "log-out",    run: handleLogout }
+  ];
+  const leads = app.leads.slice(0, 80).map((lead) => ({
+    kind: "lead",
+    title: lead.full_name || "Unnamed lead",
+    detail: `${statusLabel(lead.status)} · ${locationName(lead.location_id)}${lead.phone ? ` · ${lead.phone}` : ""}`,
+    icon: "user",
+    leadId: lead.id,
+    haystack: `${lead.full_name || ""} ${lead.email || ""} ${lead.phone || ""}`.toLowerCase()
+  }));
+  const all = [...views, ...actions, ...leads];
+  if (!q) return all.slice(0, 30);
+  return all.filter((item) => (item.haystack || `${item.title} ${item.detail}`.toLowerCase()).includes(q)).slice(0, 30);
+}
+
+function renderCommandPalette() {
+  const results = $("[data-cmdk-results]");
+  const input = $("[data-cmdk-input]");
+  if (!results || !input) return;
+  const items = buildCmdkItems(input.value);
+  app.cmdk.items = items;
+  if (app.cmdk.activeIndex >= items.length) app.cmdk.activeIndex = 0;
+  if (!items.length) { results.innerHTML = `<div class="cmdk-empty">No matches</div>`; return; }
+  const sections = { view: [], action: [], lead: [] };
+  items.forEach((item, idx) => sections[item.kind]?.push({ ...item, idx }));
+  const labels = { view: "Views", action: "Actions", lead: "Leads" };
+  results.innerHTML = ["view", "action", "lead"].map((kind) => {
+    if (!sections[kind].length) return "";
+    return `
+      <div class="cmdk-section">
+        <div class="cmdk-section-label">${labels[kind]}</div>
+        ${sections[kind].map((item) => `
+          <div class="cmdk-item ${item.idx === app.cmdk.activeIndex ? "active" : ""}" data-cmdk-index="${item.idx}">
+            <i data-lucide="${item.icon}"></i>
+            <div class="cmdk-item-body">
+              <span class="cmdk-item-title">${escapeHtml(item.title)}</span>
+              <span class="cmdk-item-detail">${escapeHtml(item.detail || "")}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }).join("");
+  iconRefresh();
+}
+
+function moveCmdkActive(delta) {
+  const len = app.cmdk.items.length;
+  if (!len) return;
+  app.cmdk.activeIndex = (app.cmdk.activeIndex + delta + len) % len;
+  renderCommandPalette();
+  const active = $(".cmdk-item.active");
+  if (active) active.scrollIntoView({ block: "nearest" });
+}
+
+function runActiveCmdk() {
+  const item = app.cmdk.items[app.cmdk.activeIndex];
+  if (!item) return;
+  $("[data-cmdk]").close();
+  if (item.kind === "view") setView(item.view);
+  else if (item.kind === "action") item.run();
+  else if (item.kind === "lead") openLeadDetail(item.leadId);
 }
 
 async function loadCheckIns() {

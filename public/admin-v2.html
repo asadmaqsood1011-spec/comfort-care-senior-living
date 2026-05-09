@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-coord1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260508-kanban1">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -156,6 +156,10 @@
             <div class="panel-head">
               <div><p class="eyebrow">Admissions CRM</p><h2>Leads</h2></div>
               <div class="panel-actions">
+                <div class="view-toggle" role="tablist" aria-label="Lead view mode">
+                  <button class="view-toggle-btn active" data-lead-view="table" role="tab" aria-selected="true"><i data-lucide="rows-3"></i>Table</button>
+                  <button class="view-toggle-btn" data-lead-view="pipeline" role="tab" aria-selected="false"><i data-lucide="kanban-square"></i>Pipeline</button>
+                </div>
                 <button class="ghost" data-export-leads><i data-lucide="download"></i>Export CSV</button>
                 <button data-open-create-lead><i data-lucide="user-plus"></i>Add lead</button>
               </div>
@@ -171,12 +175,13 @@
                 <option value="archived">Archived</option>
               </select>
             </div>
-            <div class="table-card">
+            <div class="table-card" data-lead-table-wrap>
               <table>
                 <thead><tr><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
                 <tbody data-leads-table></tbody>
               </table>
             </div>
+            <div class="lead-pipeline" data-lead-pipeline hidden></div>
           </article>
         </section>
 
@@ -284,6 +289,22 @@
       <div class="toast-stack" data-toast-stack aria-live="polite"></div>
     </main>
 
+    <dialog class="cmdk" data-cmdk>
+      <div class="cmdk-card">
+        <div class="cmdk-input-row">
+          <i data-lucide="search"></i>
+          <input data-cmdk-input type="text" placeholder="Jump to lead, view, or action..." autocomplete="off">
+          <kbd>Esc</kbd>
+        </div>
+        <div class="cmdk-results" data-cmdk-results></div>
+        <div class="cmdk-foot">
+          <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+          <span><kbd>Enter</kbd> select</span>
+          <span><kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>K</kbd> open</span>
+        </div>
+      </div>
+    </dialog>
+
     <dialog class="modal" data-create-lead-modal>
       <form class="modal-card" data-create-lead-form>
         <header><h2>Add Lead</h2><button type="button" data-close-create-lead><i data-lucide="x"></i></button></header>
@@ -350,6 +371,6 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-coord1"></script>
+    <script src="/admin-v2.js?v=20260508-kanban1"></script>
   </body>
 </html>
