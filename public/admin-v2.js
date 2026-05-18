@@ -153,6 +153,8 @@ function bindStaticEvents() {
   $("[data-refresh-rules]")?.addEventListener("click", loadIntelligenceRules);
   $("[data-intelligence-rules]")?.addEventListener("click", handleRuleAction);
   $$("[data-lead-view]").forEach((button) => button.addEventListener("click", () => setLeadView(button.dataset.leadView)));
+  $("[data-activity-filter]")?.addEventListener("change", renderFilteredActivity);
+  $("[data-refresh-activity]")?.addEventListener("click", () => refreshAll().then(renderFilteredActivity));
   $("[data-sidebar-toggle]")?.addEventListener("click", toggleSidebar);
   $("[data-sidebar-overlay]")?.addEventListener("click", () => {
     $("[data-app-shell]")?.classList.remove("sidebar-open");
@@ -1955,6 +1957,9 @@ function renderRevenueCommand() {
   iconRefresh();
 }
 
+let _revModelCache = null;
+let _revModelFingerprint = null;
+
 function buildRevenueCommandModel() {
   if (app.revenueCommand?.source === "backend") {
     const model = app.revenueCommand;
@@ -1978,6 +1983,15 @@ function buildRevenueCommandModel() {
       blockers: Array.isArray(model.blockers) ? model.blockers : []
     };
   }
+  // Memoize expensive client-side computation
+  const fp = [
+    (app.leads || []).map((l) => l.id + l.status + l.updated_at).join(),
+    (app.operations?.followUps || []).map((f) => f.id + f.status + f.due_at).join(),
+    (app.operations?.tours || []).map((t) => t.id + t.status + t.scheduled_at).join(),
+    (app.operations?.rooms || []).map((r) => r.id + r.status + r.monthly_rate).join(),
+    String(app.selectedLocationId)
+  ].join("|");
+  if (_revModelCache && _revModelFingerprint === fp) return _revModelCache;
   const now = Date.now();
   const leads = (app.leads || []).filter((lead) => !["archived", "move_in"].includes(String(lead.status || "").toLowerCase()));
   const followUps = (app.operations?.followUps || []).filter((item) => !INACTIVE_FOLLOWUP_STATUSES.has(String(item.status || "").toLowerCase()));
@@ -2024,7 +2038,7 @@ function buildRevenueCommandModel() {
   const revenueAtRisk = opportunities.filter((item) => item.blocker).length * AVG_MONTHLY_REVENUE;
   const weightedPipeline = scored.reduce((sum, item) => sum + (AVG_MONTHLY_REVENUE * item.probability / 100), 0);
   const blockerCount = overdueFollowUps.length + overdueTasks.length + scored.filter((item) => item.blocker === "Needs contact").length;
-  return {
+  const result = {
     activeLeadCount: leads.length,
     blockerCount,
     hotLeadCount,
@@ -2051,6 +2065,9 @@ function buildRevenueCommandModel() {
       { label: "Stale hot leads", count: scored.filter((item) => item.probability >= 55 && item.staleDays >= 7).length, view: "leads" }
     ]
   };
+  _revModelCache = result;
+  _revModelFingerprint = fp;
+  return result;
 }
 
 function renderRevenueOpportunity(item) {
@@ -4622,11 +4639,32 @@ function renderOperations() {
   });
   $$("[data-open-doc]").forEach((button) => {
     button.addEventListener("click", async () => {
-      const data = await fetchJson(`/api/v2/documents/${button.dataset.openDoc}/signed-url`);
-      window.open(data.url, "_blank", "noopener");
+      await withButtonLoading(button, async () => {
+        const data = await fetchJson(`/api/v2/documents/${button.dataset.openDoc}/signed-url`);
+        if (!data.url) { window.open("#", "_blank"); return; }
+        const docName = button.closest(".card")?.querySelector("strong")?.textContent || "Document";
+        const preview = $("[data-doc-preview]");
+        const frame = $("[data-doc-preview-frame]");
+        const link = $("[data-doc-preview-link]");
+        const nameEl = $("[data-doc-preview-name]");
+        if (preview && frame) {
+          frame.src = data.url;
+          if (link) link.href = data.url;
+          if (nameEl) nameEl.textContent = docName;
+          preview.hidden = false;
+        } else {
+          window.open(data.url, "_blank", "noopener");
+        }
+      });
     });
   });
-  renderActivity([...(app.dashboard?.recentActivity || []), ...(app.operations.notes || [])], $("[data-activity-list]"));
+  $("[data-close-doc-preview]")?.addEventListener("click", () => {
+    const preview = $("[data-doc-preview]");
+    const frame = $("[data-doc-preview-frame]");
+    if (preview) preview.hidden = true;
+    if (frame) frame.src = "about:blank";
+  });
+  renderFilteredActivity();
   renderCoordinationStrip();
   renderExecutionSystem();
   iconRefresh();
@@ -6230,13 +6268,57 @@ function renderCards(selector, rows, render) {
   target.innerHTML = rows?.length ? rows.map((row) => `<article class="card">${render(row)}</article>`).join("") : empty("Nothing here yet.");
 }
 
+function renderFilteredActivity() {
+  const filter = $("[data-activity-filter]")?.value || "";
+  const allRows = [...(app.dashboard?.recentActivity || []), ...(app.operations?.notes || [])];
+  const rows = filter ? allRows.filter((row) => {
+    const type = String(row.event_type || row.action || "").toLowerCase();
+    return type.includes(filter);
+  }) : allRows;
+  renderActivity(rows, $("[data-activity-list]"));
+}
+
+function activityIcon(row) {
+  const type = String(row.event_type || row.action || "").toLowerCase();
+  if (type.includes("move_in") || type.includes("moved")) return "home";
+  if (type.includes("tour")) return "calendar-days";
+  if (type.includes("follow") || type.includes("followup")) return "bell-ring";
+  if (type.includes("lead") || type.includes("contact")) return "user";
+  if (type.includes("note")) return "sticky-note";
+  if (type.includes("task")) return "list-checks";
+  if (type.includes("room")) return "door-open";
+  if (type.includes("email") || type.includes("outreach")) return "mail";
+  return "activity";
+}
+
+function activitySeverity(row) {
+  const type = String(row.event_type || row.action || "").toLowerCase();
+  if (type.includes("move_in")) return "success";
+  if (type.includes("urgent") || type.includes("escalat")) return "danger";
+  return "";
+}
+
 function renderActivity(rows, target) {
-  target.innerHTML = rows?.length ? rows.slice(0, 20).map((row) => `
-    <article class="activity-item">
-      <strong>${escapeHtml(row.action || row.event_type || "activity")}</strong>
-      <small>${formatDate(row.created_at)}${row.profiles?.full_name ? ` &middot; ${escapeHtml(row.profiles.full_name)}` : ""}</small>
-    </article>
-  `).join("") : empty("No activity yet.");
+  if (!rows?.length) { target.innerHTML = empty("No activity yet."); return; }
+  const sorted = [...rows].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  target.innerHTML = sorted.slice(0, 40).map((row) => {
+    const action = row.action || row.event_type || "activity";
+    const detail = row.detail || row.notes || row.description || "";
+    const who = row.profiles?.full_name || row.user_email || "";
+    const icon = activityIcon(row);
+    const sev = activitySeverity(row);
+    return `
+      <article class="activity-item ${sev}">
+        <span class="activity-icon"><i data-lucide="${escapeHtml(icon)}"></i></span>
+        <div class="activity-body">
+          <strong>${escapeHtml(action.replace(/_/g, " "))}</strong>
+          ${detail ? `<p>${escapeHtml(String(detail).slice(0, 120))}</p>` : ""}
+          <small>${formatDate(row.created_at)}${who ? ` &middot; ${escapeHtml(who)}` : ""}</small>
+        </div>
+      </article>
+    `;
+  }).join("");
+  iconRefresh();
 }
 
 function statusOptions(current) {

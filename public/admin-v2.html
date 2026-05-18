@@ -557,22 +557,50 @@
 
         <section class="view" data-panel="activity">
           <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Audit-style history</p><h2>Activity Timeline</h2></div></div>
+            <div class="panel-head">
+              <div><p class="eyebrow">Audit-style history</p><h2>Activity Timeline</h2></div>
+              <div class="top-actions">
+                <select data-activity-filter style="width:auto;padding:0.5rem 0.75rem;border-radius:999px;">
+                  <option value="">All events</option>
+                  <option value="lead">Leads</option>
+                  <option value="tour">Tours</option>
+                  <option value="followup">Follow-ups</option>
+                  <option value="move_in">Move-ins</option>
+                  <option value="note">Notes</option>
+                  <option value="task">Tasks</option>
+                </select>
+                <button class="ghost" data-refresh-activity><i data-lucide="refresh-cw"></i>Refresh</button>
+              </div>
+            </div>
             <div class="timeline large" data-activity-list></div>
           </article>
         </section>
 
         <section class="view" data-panel="documents">
-          <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Supabase Storage</p><h2>Documents</h2></div></div>
-            <form class="inline-form" data-document-form>
-              <input name="file" type="file" required>
-              <select name="entityType"><option value="location">Location</option><option value="lead">Lead</option><option value="resident">Resident</option></select>
-              <input name="documentType" placeholder="Document type">
-              <button type="submit"><i data-lucide="upload"></i>Upload</button>
-            </form>
-            <div class="cards-list" data-documents-list></div>
-          </article>
+          <div class="doc-layout">
+            <article class="panel doc-list-panel">
+              <div class="panel-head"><div><p class="eyebrow">Supabase Storage</p><h2>Documents</h2></div></div>
+              <form class="inline-form" data-document-form>
+                <input name="file" type="file" required>
+                <select name="entityType"><option value="location">Location</option><option value="lead">Lead</option><option value="resident">Resident</option></select>
+                <input name="documentType" placeholder="Document type">
+                <button type="submit"><i data-lucide="upload"></i>Upload</button>
+              </form>
+              <div class="cards-list" data-documents-list></div>
+            </article>
+            <aside class="doc-preview-panel" data-doc-preview hidden>
+              <div class="panel-head">
+                <div><p class="eyebrow">Preview</p><strong data-doc-preview-name></strong></div>
+                <button class="ghost" data-close-doc-preview><i data-lucide="x"></i></button>
+              </div>
+              <div class="doc-preview-frame">
+                <iframe data-doc-preview-frame src="about:blank" title="Document preview" sandbox="allow-same-origin allow-scripts"></iframe>
+              </div>
+              <div class="doc-preview-actions">
+                <a class="ghost" data-doc-preview-link href="#" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Open in new tab</a>
+              </div>
+            </aside>
+          </div>
         </section>
 
         <section class="view" data-panel="reports">
