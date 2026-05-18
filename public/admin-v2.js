@@ -3986,9 +3986,16 @@ function renderLeads() {
   }).join("");
   $$("[data-row-select]").forEach((cb) => cb.addEventListener("change", (event) => {
     const id = event.target.dataset.rowSelect;
-    if (event.target.checked) app.selectedLeadIds.add(id);
-    else app.selectedLeadIds.delete(id);
-    renderLeads();
+    const row = event.target.closest("tr");
+    if (event.target.checked) { app.selectedLeadIds.add(id); row?.classList.add("row-selected"); }
+    else { app.selectedLeadIds.delete(id); row?.classList.remove("row-selected"); }
+    // Only update bulk bar counts, not full re-render
+    const bar = $("[data-bulk-bar]");
+    if (bar) bar.hidden = app.selectedLeadIds.size === 0;
+    const countEl = $("[data-bulk-count]");
+    if (countEl) countEl.textContent = app.selectedLeadIds.size;
+    const sel = $("[data-bulk-select-all]");
+    if (sel) sel.checked = app.selectedLeadIds.size > 0 && app.selectedLeadIds.size === app.leads.length;
   }));
   const bar = $("[data-bulk-bar]");
   const count = app.selectedLeadIds.size;
@@ -5758,17 +5765,12 @@ async function handleRuleAction(event) {
     cooldownHours: card.querySelector("[data-rule-cooldown]")?.value,
     settings
   };
-  try {
-    button.disabled = true;
+  await withButtonLoading(button, async () => {
     await fetchJson(`/api/v2/intelligence/rules/${encodeURIComponent(eventType)}`, { method: "PATCH", body });
     pushToast("Rule updated.", "success");
     await loadIntelligenceRules();
     await loadIntelligence().catch(() => {});
-  } catch (err) {
-    pushToast(err.message || "Could not update rule.", "error");
-  } finally {
-    button.disabled = false;
-  }
+  }).catch((err) => pushToast(err.message || "Could not update rule.", "error"));
 }
 
 function openCreateUser() {
