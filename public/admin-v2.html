@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Comfort Care Operations CRM</title>
+    <title>Comfort Care Operations Hub</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230b231d'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='20' fill='%23e6c681' font-family='Georgia'%3ECC%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260508-roi1">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260518-improvements">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -17,7 +17,7 @@
           <span class="brand-mark">CC</span>
           <div>
             <p>Comfort Care Senior Living</p>
-            <h1>Operations CRM</h1>
+            <h1>Operations Hub</h1>
           </div>
         </div>
         <form data-login-form class="login-form">
@@ -30,8 +30,9 @@
       </section>
     </main>
 
+    <div class="sidebar-overlay" data-sidebar-overlay></div>
     <main class="app-shell" data-app-shell hidden>
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <a class="side-brand" href="/">
           <span class="brand-mark">CC</span>
           <span><strong>Comfort Care</strong><small>Operations</small></span>
@@ -45,17 +46,20 @@
 
         <nav class="side-nav">
           <small>Operate</small>
-          <button class="active" data-view="dashboard"><i data-lucide="layout-dashboard"></i>Dashboard</button>
+          <button class="active" data-view="dashboard"><i data-lucide="radar"></i>Command Center</button>
           <button data-view="leads"><i data-lucide="users"></i>Leads</button>
           <button data-view="tours"><i data-lucide="calendar-days"></i>Tours</button>
           <button data-view="followups"><i data-lucide="bell-ring"></i>Follow-ups</button>
+          <button data-view="rooms"><i data-lucide="door-open"></i>Rooms</button>
+          <small>Coordinate</small>
+          <button data-view="outreach"><i data-lucide="mail"></i>Outreach</button>
           <button data-view="tasks"><i data-lucide="list-checks"></i>Tasks</button>
           <button data-view="residents"><i data-lucide="bed-double"></i>Residents</button>
           <button data-view="checkins"><i data-lucide="clipboard-check"></i>Check-Ins</button>
-          <small>Control</small>
-          <button data-view="activity"><i data-lucide="history"></i>Activity</button>
-          <button data-view="documents"><i data-lucide="folder-open"></i>Documents</button>
+          <small>Manage</small>
           <button data-view="reports"><i data-lucide="bar-chart-3"></i>Reports</button>
+          <button data-view="documents"><i data-lucide="folder-open"></i>Documents</button>
+          <button data-view="activity"><i data-lucide="history"></i>Activity</button>
           <button data-view="users" data-super-only><i data-lucide="shield-check"></i>Users</button>
         </nav>
 
@@ -68,11 +72,19 @@
 
       <section class="workspace">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Production v2</p>
-            <h1 data-page-title>Dashboard</h1>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="sidebar-toggle" data-sidebar-toggle aria-label="Toggle sidebar" title="Toggle sidebar"><i data-lucide="panel-left"></i></button>
+            <div>
+              <p class="eyebrow">Production v2</p>
+              <h1 data-page-title>Command Center</h1>
+            </div>
           </div>
           <div class="top-actions">
+            <button class="ghost" data-focus-mode><i data-lucide="crosshair"></i>Focus mode</button>
+            <button class="ghost notification-button" data-notifications><i data-lucide="bell"></i><span data-notification-count>0</span></button>
+            <button class="ghost super-notification-button" data-super-notifications data-super-only hidden><i data-lucide="bell-ring"></i><span>0</span></button>
+            <button class="ghost" data-open-apps><i data-lucide="plug"></i>Apps</button>
+            <button class="ghost" data-view="outreach"><i data-lucide="mail"></i>Outreach</button>
             <button class="ghost" data-refresh><i data-lucide="refresh-cw"></i>Refresh</button>
             <a class="ghost" href="/" target="_blank" rel="noopener"><i data-lucide="home"></i>View site</a>
             <button class="ghost" data-logout><i data-lucide="log-out"></i>Log out</button>
@@ -80,6 +92,12 @@
         </header>
 
         <output class="global-status" data-global-status></output>
+
+        <section class="mission-context-rail" data-mission-context aria-live="polite">
+          <article class="mission-context-card">
+            <span>Loading operational context...</span>
+          </article>
+        </section>
 
         <section class="coordination-strip" data-coordination-strip aria-live="polite">
           <header class="coord-strip-head">
@@ -106,6 +124,92 @@
         </section>
 
         <section class="view active" data-panel="dashboard">
+          <section class="dashboard-command-grid">
+            <section class="system-health-row" data-system-health></section>
+            <section class="dashboard-charts" data-dashboard-charts></section>
+            <section class="today-work-home" data-today-work-home></section>
+            <section class="value-layer-panel" data-value-layer></section>
+            <section class="dashboard-room-board" data-dashboard-room-board></section>
+            <section class="revenue-command" data-revenue-command>
+              <article class="revenue-loading">
+                <p class="eyebrow">Revenue Command</p>
+                <h2>Loading occupancy priorities...</h2>
+              </article>
+            </section>
+          </section>
+          <section class="app-connections-panel" data-app-connections></section>
+          <section class="scope-control-panel" data-scope-control></section>
+          <section class="super-escalation-panel" data-super-escalations data-super-only hidden></section>
+          <section class="placement-desk-panel" data-placement-desk></section>
+          <section class="daily-operating-plan-shell" data-operating-plan>
+            <article class="revenue-loading">
+              <p class="eyebrow">Daily Operating Plan</p>
+              <h2>Loading location priorities...</h2>
+            </article>
+          </section>
+          <section class="admissions-command-center" data-command-center>
+            <header class="command-center-hero">
+              <div>
+                <p class="eyebrow">Admissions operating system</p>
+                <h2>Admissions Queue</h2>
+                <span data-cc-state>Live admissions coordination</span>
+              </div>
+              <div class="command-center-actions">
+                <button class="ghost" data-cc-next><i data-lucide="skip-forward"></i>Next action</button>
+                <button data-open-work-sprint><i data-lucide="play"></i>Run sprint</button>
+              </div>
+            </header>
+            <div class="mission-state-bar" data-cc-mission></div>
+            <div class="command-center-grid">
+              <aside class="command-rail">
+                <div class="rail-head">
+                  <div><p class="eyebrow">Priority queue</p><strong data-cc-count>0 actions</strong></div>
+                  <span class="coord-pulse"></span>
+                </div>
+                <div class="command-rail-list" data-cc-queue></div>
+              </aside>
+              <main class="active-case-file" data-cc-active></main>
+              <aside class="playbook-panel" data-cc-context></aside>
+            </div>
+          </section>
+          <article class="panel work-session-panel">
+            <div class="work-session" data-work-session></div>
+          </article>
+          <div class="execution-grid">
+            <article class="panel execution-panel command-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Admissions command queue</p><h2>Do first</h2></div>
+                <span class="execution-badge" data-command-count>0 actions</span>
+              </div>
+              <div class="command-queue" data-command-queue></div>
+            </article>
+            <article class="panel execution-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Daily admissions plan</p><h2>Today's execution</h2></div>
+              </div>
+              <div class="daily-plan" data-daily-plan></div>
+            </article>
+          </div>
+          <div class="execution-grid">
+            <article class="panel execution-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Tour workflow</p><h2>Tour readiness</h2></div>
+              </div>
+              <div class="tour-readiness" data-tour-readiness></div>
+            </article>
+            <article class="panel execution-panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">Move-in risk</p><h2>Revenue at risk</h2></div>
+              </div>
+              <div class="risk-economics" data-risk-economics></div>
+            </article>
+          </div>
+          <article class="panel execution-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Location accountability</p><h2>Admissions scoreboard</h2></div>
+            </div>
+            <div class="accountability-board" data-location-accountability></div>
+          </article>
           <article class="panel intelligence-panel">
             <div class="panel-head">
               <div>
@@ -135,7 +239,14 @@
             <div class="queue-strip" data-priority-queues></div>
             <div class="predictive-grid" data-predictive-cards></div>
           </article>
-          <div class="metric-grid" data-metrics></div>
+          <div class="metric-grid" data-metrics>
+            <article class="metric skeleton" style="height:6rem"></article>
+            <article class="metric skeleton" style="height:6rem"></article>
+            <article class="metric skeleton" style="height:6rem"></article>
+            <article class="metric skeleton" style="height:6rem"></article>
+            <article class="metric skeleton" style="height:6rem"></article>
+            <article class="metric skeleton" style="height:6rem"></article>
+          </div>
           <div class="two-col">
             <article class="panel">
               <div class="panel-head"><div><p class="eyebrow">Census forecast</p><h2>Occupancy outlook</h2></div></div>
@@ -165,11 +276,11 @@
         <section class="view" data-panel="leads">
           <article class="panel">
             <div class="panel-head">
-              <div><p class="eyebrow">Admissions CRM</p><h2>Leads</h2></div>
+              <div><p class="eyebrow">Family journey</p><h2>Admissions pipeline</h2></div>
               <div class="panel-actions">
                 <div class="view-toggle" role="tablist" aria-label="Lead view mode">
-                  <button class="view-toggle-btn active" data-lead-view="table" role="tab" aria-selected="true"><i data-lucide="rows-3"></i>Table</button>
-                  <button class="view-toggle-btn" data-lead-view="pipeline" role="tab" aria-selected="false"><i data-lucide="kanban-square"></i>Pipeline</button>
+                  <button class="view-toggle-btn active" data-lead-view="pipeline" role="tab" aria-selected="true"><i data-lucide="kanban-square"></i>Pipeline</button>
+                  <button class="view-toggle-btn" data-lead-view="table" role="tab" aria-selected="false"><i data-lucide="rows-3"></i>Data view</button>
                 </div>
                 <button class="ghost" data-export-leads><i data-lucide="download"></i>Export CSV</button>
                 <button data-open-create-lead><i data-lucide="user-plus"></i>Add lead</button>
@@ -189,7 +300,7 @@
             <div class="bulk-bar" data-bulk-bar hidden>
               <span><strong data-bulk-count>0</strong> selected</span>
               <select data-bulk-status>
-                <option value="">Change status…</option>
+                <option value="">Change status&hellip;</option>
                 <option value="contacted">Contacted</option>
                 <option value="tour_scheduled">Tour scheduled</option>
                 <option value="move_in">Move in</option>
@@ -198,14 +309,100 @@
               <button data-bulk-apply><i data-lucide="check"></i>Apply</button>
               <button class="ghost" data-bulk-clear><i data-lucide="x"></i>Clear</button>
             </div>
-            <div class="table-card" data-lead-table-wrap>
+            <div class="table-card" data-lead-table-wrap hidden>
               <table>
                 <thead><tr><th><input type="checkbox" data-bulk-select-all aria-label="Select all"></th><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
                 <tbody data-leads-table></tbody>
               </table>
             </div>
-            <div class="lead-pipeline" data-lead-pipeline hidden></div>
+            <div class="lead-pipeline" data-lead-pipeline></div>
           </article>
+        </section>
+
+        <section class="view" data-panel="outreach">
+          <div class="two-col outreach-layout">
+            <article class="panel outreach-composer">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Mass outreach</p>
+                  <h2>Campaign composer</h2>
+                </div>
+                <span class="execution-badge" data-outreach-recipient-count>0 mailable</span>
+              </div>
+              <form class="outreach-form" data-outreach-form>
+                <div class="outreach-filter-grid">
+                  <label>Status
+                    <select name="status" data-outreach-status>
+                      <option value="">All active leads</option>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="tour_scheduled">Tour scheduled</option>
+                      <option value="move_in">Move in</option>
+                    </select>
+                  </label>
+                  <label>Source
+                    <select name="source" data-outreach-source>
+                      <option value="">All sources</option>
+                    </select>
+                  </label>
+                  <label>Care type
+                    <select name="careType" data-outreach-care-type>
+                      <option value="">All care types</option>
+                    </select>
+                  </label>
+                  <label>Search
+                    <input name="search" data-outreach-search placeholder="Name, email, phone">
+                  </label>
+                </div>
+                <label class="archive-toggle outreach-selected-only">
+                  <input type="checkbox" data-outreach-selected-only>
+                  Use selected leads only
+                  <span data-outreach-selected-count>0 selected</span>
+                </label>
+                <div class="outreach-stats" data-outreach-stats></div>
+                <label>Campaign name
+                  <input name="campaignName" data-outreach-campaign-name placeholder="May follow-up campaign">
+                </label>
+                <label>Subject
+                  <input name="subject" data-outreach-subject placeholder="A personal note from Comfort Care Senior Living">
+                </label>
+                <label>Email body
+                  <textarea name="body" data-outreach-body rows="11" placeholder="Hi {{first_name}},&#10;&#10;..."></textarea>
+                </label>
+                <div class="outreach-template-help">
+                  <code>{{first_name}}</code>
+                  <code>{{community}}</code>
+                  <code>{{care_type}}</code>
+                  <code>{{lead_message}}</code>
+                </div>
+                <div class="inline-form outreach-test-row">
+                  <input type="email" data-outreach-test-recipient placeholder="test@example.com">
+                  <button class="ghost" type="button" data-outreach-test><i data-lucide="send"></i>Send test</button>
+                </div>
+                <div class="panel-actions outreach-actions">
+                  <button class="ghost" type="button" data-outreach-draft><i data-lucide="wand-sparkles"></i>Draft with AI</button>
+                  <button class="ghost" type="button" data-outreach-demo><i data-lucide="mail-check"></i>Log demo</button>
+                  <button class="danger" type="button" data-outreach-live><i data-lucide="send"></i>Send live</button>
+                </div>
+                <output class="global-status outreach-status" data-outreach-status-output></output>
+              </form>
+            </article>
+
+            <article class="panel outreach-history-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Outreach log</p>
+                  <h2>Campaign history</h2>
+                </div>
+                <button class="ghost" data-outreach-refresh-history><i data-lucide="refresh-cw"></i>Refresh</button>
+              </div>
+              <label class="archive-toggle">
+                <input data-outreach-show-archived type="checkbox">
+                Show archived campaigns
+              </label>
+              <div class="campaign-history-list" data-outreach-history></div>
+            </article>
+          </div>
         </section>
 
         <section class="view" data-panel="checkins">
@@ -220,20 +417,29 @@
 
         <section class="view" data-panel="tours">
           <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Tour calendar</p><h2>Scheduled Tours</h2></div></div>
+            <div class="panel-head"><div><p class="eyebrow">Tour workflow</p><h2>Scheduled tours</h2></div></div>
+            <section class="integration-strip" data-calendar-integration>
+              <div>
+                <p class="eyebrow">Calendar sync</p>
+                <strong>Checking Google Calendar...</strong>
+                <span>Connect Google Calendar to create tour events automatically.</span>
+              </div>
+            </section>
             <form class="inline-form" data-tour-form>
               <select name="leadId" data-tour-lead required></select>
               <input name="scheduledAt" type="datetime-local" required>
               <input name="notes" placeholder="Tour notes">
               <button type="submit"><i data-lucide="calendar-plus"></i>Schedule</button>
             </form>
+            <section class="tour-conversion-coach" data-tour-conversion-coach></section>
+            <section class="tour-workflow-board" data-tour-workflow></section>
             <div class="cards-list" data-tours-list></div>
           </article>
         </section>
 
         <section class="view" data-panel="followups">
           <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">No missed follow-up</p><h2>Follow-ups</h2></div></div>
+            <div class="panel-head"><div><p class="eyebrow">No missed commitment</p><h2>Follow-up queue</h2></div></div>
             <form class="inline-form" data-followup-form>
               <select name="leadId" data-followup-lead required></select>
               <input name="dueAt" type="datetime-local" required>
@@ -257,16 +463,94 @@
           </article>
         </section>
 
+        <section class="view" data-panel="rooms">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Spatial inventory</p>
+                <h2>Room Board</h2>
+              </div>
+              <span class="execution-badge" data-room-count>0 rooms</span>
+            </div>
+            <div class="filters room-filters">
+              <select data-room-status-filter>
+                <option value="">All statuses</option>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="reserved">Reserved</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="offline">Offline</option>
+              </select>
+              <input data-room-care-filter placeholder="Care level">
+              <select data-room-type-filter>
+                <option value="">All room types</option>
+                <option value="private">Private</option>
+                <option value="semi_private">Semi-private</option>
+                <option value="memory_care">Memory care</option>
+                <option value="respite">Respite</option>
+              </select>
+            </div>
+            <div class="room-availability-counts" data-room-availability-counts></div>
+            <section class="room-readiness-sla" data-room-readiness-sla></section>
+            <form class="inline-form room-form" data-room-form>
+              <select name="locationId" data-room-location required></select>
+              <input name="roomNumber" placeholder="Room #" required>
+              <input name="roomName" placeholder="Room name">
+              <input name="floor" placeholder="Floor">
+              <select name="roomType">
+                <option value="private">Private</option>
+                <option value="semi_private">Semi-private</option>
+                <option value="memory_care">Memory care</option>
+                <option value="respite">Respite</option>
+              </select>
+              <input name="capacity" type="number" min="1" value="1" aria-label="Capacity">
+              <select name="status">
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="reserved">Reserved</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="offline">Offline</option>
+              </select>
+              <select name="condition">
+                <option value="ready">Ready</option>
+                <option value="lived_in">Lived-in</option>
+                <option value="needs_cleaning">Needs cleaning</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="damaged">Damaged</option>
+                <option value="offline">Offline</option>
+              </select>
+              <input name="monthlyRate" type="number" min="0" step="1" placeholder="Monthly rate">
+              <input name="budgetMin" type="number" min="0" step="1" placeholder="Budget min">
+              <input name="budgetMax" type="number" min="0" step="1" placeholder="Budget max">
+              <input name="careLevelSupported" placeholder="Care level supported">
+              <input name="targetMoveInDate" type="date" aria-label="Target move-in date">
+              <textarea name="notes" rows="2" placeholder="Room notes"></textarea>
+              <button type="submit"><i data-lucide="door-open"></i>Add room</button>
+            </form>
+            <div class="room-inventory" data-room-inventory></div>
+          </article>
+        </section>
+
         <section class="view" data-panel="residents">
           <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">Operations</p><h2>Residents</h2></div></div>
+            <div class="panel-head"><div><p class="eyebrow">Move-in operations</p><h2>Residents</h2></div></div>
             <form class="inline-form" data-resident-form>
               <select name="leadId" data-resident-lead><option value="">No linked lead</option></select>
               <input name="fullName" placeholder="Resident name" required>
-              <input name="roomNumber" placeholder="Room">
+              <select name="roomId" data-resident-room required>
+                <option value="">Choose available room...</option>
+              </select>
+              <select name="roomCondition">
+                <option value="ready">Room ready</option>
+                <option value="lived_in">Lived-in / monitor</option>
+                <option value="needs_cleaning">Needs cleaning</option>
+                <option value="maintenance">Maintenance needed</option>
+              </select>
               <input name="moveInDate" type="date">
               <button type="submit"><i data-lucide="bed-double"></i>Add resident</button>
             </form>
+            <div class="room-occupancy" data-room-occupancy></div>
+            <div class="workflow-strip" data-move-in-workflows></div>
             <div class="cards-list" data-residents-list></div>
           </article>
         </section>
@@ -295,6 +579,27 @@
           <article class="panel">
             <div class="panel-head"><div><p class="eyebrow">Owner visibility</p><h2>Reports</h2></div></div>
             <div class="chart-grid" data-report-grid></div>
+            <div class="marketing-action-grid" data-marketing-actions></div>
+            <div class="lost-recovery-panel" data-lost-recovery></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Partner operations</p><h2>Referral Partners</h2></div></div>
+            <form class="inline-form" data-referral-partner-form>
+              <select name="locationId" data-referral-partner-location required></select>
+              <input name="sourceName" placeholder="Source / partner name" required>
+              <input name="contactName" placeholder="Contact name">
+              <input name="phone" placeholder="Phone">
+              <input name="email" type="email" placeholder="Email">
+              <select name="status">
+                <option value="active">Active</option>
+                <option value="watch">Watch</option>
+                <option value="paused">Paused</option>
+                <option value="archived">Archived</option>
+              </select>
+              <button type="submit"><i data-lucide="handshake"></i>Save</button>
+            </form>
+            <p class="helper-text" data-referral-partner-note hidden></p>
+            <div class="cards-list" data-referral-partners></div>
           </article>
         </section>
 
@@ -305,6 +610,14 @@
               <button data-open-create-user><i data-lucide="user-cog"></i>Add user</button>
             </div>
             <div class="cards-list" data-users-list></div>
+          </article>
+          <article class="panel intelligence-rule-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Operating thresholds</p><h2>Intelligence Rules</h2></div>
+              <button class="ghost" data-refresh-rules><i data-lucide="refresh-cw"></i>Refresh</button>
+            </div>
+            <p class="helper-text" data-rule-schema-note hidden></p>
+            <div class="rule-list" data-intelligence-rules></div>
           </article>
         </section>
       </section>
@@ -345,6 +658,33 @@
       </form>
     </dialog>
 
+    <dialog class="modal" data-pipeline-transition-modal>
+      <form class="modal-card pipeline-transition-card" data-pipeline-transition-form>
+        <header><h2 data-pipeline-transition-title>Move lead</h2><button type="button" data-close-pipeline-transition><i data-lucide="x"></i></button></header>
+        <p class="helper-text" data-pipeline-transition-copy>Capture needed details before changing stage.</p>
+        <section data-pipeline-transition-section="contacted">
+          <label>Contact outcome<input name="contactNote" placeholder="Spoke with family, left voicemail, etc."></label>
+          <label>Next follow-up<input name="followUpAt" type="datetime-local"></label>
+        </section>
+        <section data-pipeline-transition-section="tour_scheduled">
+          <label>Tour date/time<input name="tourAt" type="datetime-local"></label>
+          <label>Tour notes<input name="tourNotes" placeholder="Who is attending, needs, objections"></label>
+        </section>
+        <section data-pipeline-transition-section="move_in">
+          <label>Room<select name="roomId" data-pipeline-room></select></label>
+          <label>Move-in date<input name="moveInDate" type="date"></label>
+        </section>
+        <button type="submit"><i data-lucide="arrow-right"></i>Move lead</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-notification-modal>
+      <section class="modal-card notification-center">
+        <header><h2>Notifications</h2><button type="button" data-close-notifications><i data-lucide="x"></i></button></header>
+        <div class="notification-list" data-notification-list></div>
+      </section>
+    </dialog>
+
     <dialog class="modal" data-triage-modal>
       <section class="modal-card">
         <header><h2>Triage inbound message</h2><button type="button" data-close-triage><i data-lucide="x"></i></button></header>
@@ -372,6 +712,45 @@
         <div class="morning-brief-result" data-morning-brief-result>
           <p class="helper-text">Building today's brief...</p>
         </div>
+      </section>
+    </dialog>
+
+    <dialog class="modal" data-room-condition-modal>
+      <form class="modal-card" data-room-condition-form>
+        <header><h2>Confirm room condition</h2><button type="button" data-close-room-condition><i data-lucide="x"></i></button></header>
+        <p class="helper-text" data-room-condition-copy>Before the resident leaves the room, confirm what condition the room is in.</p>
+        <label>Room condition
+          <select name="roomCondition" required>
+            <option value="">Choose condition...</option>
+            <option value="ready">Ready for next resident</option>
+            <option value="lived_in">Lived-in / monitor</option>
+            <option value="needs_cleaning">Needs cleaning</option>
+            <option value="maintenance">Maintenance needed</option>
+            <option value="damaged">Damaged / manager review</option>
+          </select>
+        </label>
+        <label>Condition notes<textarea name="conditionNotes" rows="4" placeholder="What should housekeeping, maintenance, or admissions know?"></textarea></label>
+        <button type="submit"><i data-lucide="clipboard-check"></i>Confirm move-out</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-room-detail-modal>
+      <section class="modal-card" data-room-detail>
+        <header><h2>Room detail</h2><button type="button" data-close-room-detail><i data-lucide="x"></i></button></header>
+        <div data-room-detail-body></div>
+      </section>
+    </dialog>
+
+    <dialog class="modal work-sprint-modal" data-work-sprint-modal>
+      <section class="modal-card work-sprint-card">
+        <header>
+          <div>
+            <p class="eyebrow">Admissions sprint</p>
+            <h2>Work the highest-impact actions</h2>
+          </div>
+          <button type="button" data-close-work-sprint><i data-lucide="x"></i></button>
+        </header>
+        <div class="work-sprint" data-work-sprint></div>
       </section>
     </dialog>
 
@@ -426,13 +805,19 @@
       <section class="modal-card lead-detail-card">
         <header><h2 data-detail-name>Lead</h2><button type="button" data-close-lead-detail><i data-lucide="x"></i></button></header>
         <div class="detail-grid" data-detail-meta></div>
-        <label>Internal notes<textarea data-detail-notes rows="5" placeholder="Add internal notes..."></textarea></label>
-        <div class="modal-actions">
-          <button type="button" data-save-lead-notes><i data-lucide="save"></i>Save notes</button>
-          <button class="ghost" type="button" data-detail-followup><i data-lucide="bell-plus"></i>Add follow-up</button>
+        <section class="family-journey" data-detail-journey></section>
+        <div class="lead-detail-tabs" role="tablist" aria-label="Lead detail sections">
+          <button class="active" data-lead-detail-tab="timeline" role="tab" aria-selected="true"><i data-lucide="history"></i>Timeline</button>
+          <button data-lead-detail-tab="email" role="tab" aria-selected="false"><i data-lucide="mail"></i>Email</button>
+          <button data-lead-detail-tab="notes" role="tab" aria-selected="false"><i data-lucide="notebook-pen"></i>Notes</button>
+          <button data-lead-detail-tab="tours" role="tab" aria-selected="false"><i data-lucide="calendar-days"></i>Tours</button>
         </div>
         <output data-detail-status></output>
-        <article class="email-composer">
+        <section class="lead-detail-panel active" data-lead-detail-panel="timeline">
+          <p class="eyebrow">Timeline</p>
+          <div class="timeline" data-detail-activity></div>
+        </section>
+        <section class="lead-detail-panel" data-lead-detail-panel="email" hidden>
           <p class="eyebrow">Human-reviewed email</p>
           <div class="modal-actions">
             <button class="ghost" type="button" data-generate-lead-email><i data-lucide="wand-sparkles"></i>Generate draft</button>
@@ -440,23 +825,55 @@
           </div>
           <label>Subject<input data-detail-email-subject placeholder="Email subject"></label>
           <label>Email body<textarea data-detail-email-body rows="7" placeholder="Generate or write a message..."></textarea></label>
+          <label class="checkbox-row"><input type="checkbox" data-send-from-gmail checked>Send from my linked Gmail when available</label>
           <p class="helper-text">Drafts can use placeholders like {{first_name}}, {{community}}, and {{care_type}}. Review before sending.</p>
-        </article>
-        <div class="detail-columns">
-          <article>
-            <p class="eyebrow">Timeline</p>
-            <div class="timeline" data-detail-activity></div>
-          </article>
-          <article>
-            <p class="eyebrow">Email History</p>
-            <div class="cards-list" data-detail-emails></div>
-          </article>
-        </div>
+          <div class="cards-list" data-detail-emails></div>
+        </section>
+        <section class="lead-detail-panel" data-lead-detail-panel="notes" hidden>
+          <label>Internal notes<textarea data-detail-notes rows="7" placeholder="Add internal notes..."></textarea></label>
+          <div class="modal-actions">
+            <button type="button" data-save-lead-notes><i data-lucide="save"></i>Save notes</button>
+            <button class="ghost" type="button" data-detail-followup><i data-lucide="bell-plus"></i>Add follow-up</button>
+          </div>
+        </section>
+        <section class="lead-detail-panel" data-lead-detail-panel="tours" hidden>
+          <p class="eyebrow">Tours and follow-ups</p>
+          <div class="cards-list" data-detail-tours></div>
+        </section>
       </section>
+    </dialog>
+
+    <!-- Keyboard shortcuts reference -->
+    <dialog class="kbd-modal" data-kbd-modal>
+      <div class="kbd-modal-head">
+        <strong>Keyboard shortcuts</strong>
+        <button class="ghost" data-close-kbd-modal><i data-lucide="x"></i></button>
+      </div>
+      <div class="kbd-modal-body">
+        <div class="kbd-row"><span>Next action in queue</span><kbd>n</kbd></div>
+        <div class="kbd-row"><span>Mark active action done</span><kbd>d</kbd></div>
+        <div class="kbd-row"><span>Command palette</span><kbd>Ctrl K</kbd></div>
+        <div class="kbd-row"><span>Search / filter</span><kbd>/</kbd></div>
+        <div class="kbd-row"><span>Show this help</span><kbd>?</kbd></div>
+        <div class="kbd-row"><span>Toggle sidebar</span><kbd>Ctrl \</kbd></div>
+        <div class="kbd-row"><span>Close modal</span><kbd>Esc</kbd></div>
+      </div>
+    </dialog>
+
+    <!-- Styled confirm dialog (replaces window.confirm) -->
+    <dialog class="confirm-modal" data-confirm-modal>
+      <div class="confirm-modal-body">
+        <strong data-confirm-title>Confirm action</strong>
+        <p data-confirm-message></p>
+        <div class="confirm-modal-actions">
+          <button class="ghost" data-confirm-cancel>Cancel</button>
+          <button class="danger" data-confirm-ok>Confirm</button>
+        </div>
+      </div>
     </dialog>
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260508-roi1"></script>
+    <script src="/admin-v2.js?v=20260518-improvements"></script>
   </body>
 </html>
