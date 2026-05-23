@@ -1,64 +1,5 @@
 // @ts-check
 
-const app = {
-  supabase: null,
-  session: null,
-  user: null,
-  locations: [],
-  selectedLocationId: "",
-  dashboard: null,
-  intelligence: null,
-  operatingPlan: { items: [], summary: {}, schemaInstalled: false },
-  roomIntelligence: null,
-  revenueCommand: null,
-  escalations: null,
-  placementDesk: null,
-  forecast: null,
-  referrals: [],
-  referralPartners: { schemaInstalled: false, partners: [] },
-  intelligenceRules: { schemaInstalled: false, rules: [] },
-  integrations: { schemaInstalled: false, integrations: [] },
-  scopeControl: null,
-  leads: [],
-  operations: { residents: [], rooms: [], tours: [], followUps: [], tasks: [], notes: [], documents: [], emailHistory: [] },
-  workflows: { schemaInstalled: false, workflows: [] },
-  roomFilters: { status: "", careLevel: "", roomType: "" },
-  selectedRoomDetail: null,
-  checkIns: [],
-  outreach: { campaigns: [] },
-  selectedLeadDetail: null,
-  activeView: "dashboard",
-  leadView: localStorage.getItem("ccsl:v2-lead-view") || "pipeline",
-  cmdk: { activeIndex: 0, items: [] },
-  selectedLeadIds: new Set(),
-  activeCommandId: localStorage.getItem("ccsl:v2-active-command") || "",
-  workflowOutcome: null,
-  operatingOutcome: null,
-  pendingPipelineTransition: null,
-  pendingResidentDepartureId: "",
-  focusMode: localStorage.getItem("ccsl:v2-focus-mode") === "true"
-};
-
-const SLA_HOURS = { new: 24, contacted: 72, tour_scheduled: 168 };
-const AVG_MONTHLY_REVENUE = 6500;
-
-const PIPELINE_COLUMNS = [
-  { status: "new",            label: "New" },
-  { status: "contacted",      label: "Contacted" },
-  { status: "tour_scheduled", label: "Tour scheduled" },
-  { status: "move_in",        label: "Move-in" },
-  { status: "archived",       label: "Archived",       muted: true }
-];
-
-const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-
-const INACTIVE_FOLLOWUP_STATUSES = new Set(["completed", "archived", "missed", "done"]);
-const INACTIVE_TOUR_STATUSES = new Set(["completed", "no_show", "cancelled"]);
-const COORD_HORIZON_MS = 4 * 60 * 60 * 1000;
-let coordinationTicker = null;
-let silentRefreshTimer = null;
-
 boot();
 
 window.addEventListener("unhandledrejection", (event) => {
@@ -73,14 +14,9 @@ async function boot() {
     if (config.supabaseAnonKey) {
       app.supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
     }
-    if (config.authMode === "browser" && config.supabaseAnonKey) {
-      const { data } = await app.supabase.auth.getSession();
-      app.session = data.session;
-    } else {
-      app.session = readStoredSession();
-    }
-  if (app.session) await loadSession();
-  else showAuth();
+    app.session = await restoreStoredSession(config.authMode === "browser" && config.supabaseAnonKey);
+    if (app.session || config.authMode === "server") await loadSession();
+    else showAuth();
   } catch (err) {
     showAuth();
     setLoginStatus(err.message || "Unable to load Supabase configuration.");
@@ -116,8 +52,7 @@ function bindStaticEvents() {
   $$("[data-view]").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));
   });
-  $("[data-lead-search]").addEventListener("input", debounce(loadLeads, 250));
-  $("[data-lead-status-filter]").addEventListener("change", loadLeads);
+  $("[data-lead-status-filter]").addEventListener("change", () => { app.leadsPagination.page = 1; loadLeads(1); });
   $("[data-open-create-lead]").addEventListener("click", openCreateLead);
   $("[data-close-create-lead]").addEventListener("click", () => $("[data-create-lead-modal]").close());
   $("[data-create-lead-form]").addEventListener("submit", handleCreateLead);
@@ -163,6 +98,9 @@ function bindStaticEvents() {
   $("[data-kbd-modal]")?.addEventListener("click", (e) => {
     if (e.target === e.currentTarget) e.currentTarget.close();
   });
+  $("[data-leads-prev]")?.addEventListener("click", () => { if (app.leadsPagination.page > 1) changeLeadsPage(app.leadsPagination.page - 1); });
+  $("[data-leads-next]")?.addEventListener("click", () => { if (app.leadsPagination.page < app.leadsPagination.pageCount) changeLeadsPage(app.leadsPagination.page + 1); });
+  $("[data-lead-search]").addEventListener("input", debounce(() => { app.leadsPagination.page = 1; loadLeads(1); }, 250));
   bindPipelineDnD();
   bindCommandPalette();
   bindOperatorShortcuts();
@@ -170,6 +108,7 @@ function bindStaticEvents() {
   bindAiPanels();
   bindMassOutreach();
   bindArchiveAndMerge();
+  bindCareOps();
   applyFocusMode();
 }
 
@@ -377,6 +316,7 @@ async function handleBulkApply() {
   try {
     await fetchJson("/api/v2/leads/bulk", { method: "POST", body: { ids, status } });
     app.selectedLeadIds = new Set();
+    app.leadsPagination.page = 1;
     setStatus(`Updated ${ids.length} lead${ids.length === 1 ? "" : "s"}.`);
     await refreshAll();
   } catch (err) {
@@ -499,6 +439,11 @@ function bindOperatorShortcuts() {
       setTimeout(() => $("[data-lead-search]")?.focus(), 0);
       return;
     }
+    if (event.key.toLowerCase() === "c") {
+      event.preventDefault();
+      openCreateLead();
+      return;
+    }
     if (app.activeView !== "dashboard") return;
     if (event.key.toLowerCase() === "n") {
       event.preventDefault();
@@ -555,6 +500,24 @@ function moveToNextCommand() {
   setActiveCommand(items[(index + 1) % items.length].id);
 }
 
+async function changeLeadsPage(page) {
+  await loadLeads(page);
+  refreshDashboardSnapshot().catch(() => {});
+}
+
+async function refreshDashboardSnapshot() {
+  if (!app.session) return;
+  invalidate("dashboard");
+  invalidate("intelligence");
+  invalidate("operations");
+  await Promise.all([
+    loadDashboard(),
+    loadIntelligence(),
+    loadOperations(),
+    loadRevenueCommand().catch(() => {})
+  ]);
+}
+
 async function handleLogin(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -568,6 +531,12 @@ async function handleLogin(event) {
     const data = await fetchJson("/api/v2/login", { method: "POST", body: { email, password }, skipAuth: true });
     if (!data.session?.access_token) throw new Error("Login succeeded but no session was returned.");
     app.session = data.session;
+    if (app.supabase && app.session.refresh_token) {
+      await app.supabase.auth.setSession({
+        access_token: app.session.access_token,
+        refresh_token: app.session.refresh_token
+      }).catch(() => {});
+    }
     storeSession(app.session);
     setLoginStatus("Loading your dashboard...");
     showApp();
@@ -581,6 +550,7 @@ async function handleLogin(event) {
 }
 
 async function handleLogout() {
+  await fetchJson("/api/v2/logout", { method: "POST", skipAuth: true }).catch(() => {});
   if (app.supabase) await app.supabase.auth.signOut();
   storeSession(null);
   app.session = null;
@@ -602,10 +572,13 @@ async function loadSession() {
     .catch((err) => setStatus(err.message || "Unable to load dashboard data.", true));
 }
 
+let _realtimeChannel = null;
+
 function startBackgroundLoops() {
   stopBackgroundLoops();
   coordinationTicker = setInterval(renderCoordinationStrip, 30_000);
   silentRefreshTimer = setInterval(silentRefresh, 60_000);
+  bindRealtimeSubscriptions();
 }
 
 function stopBackgroundLoops() {
@@ -613,26 +586,52 @@ function stopBackgroundLoops() {
   if (silentRefreshTimer) clearInterval(silentRefreshTimer);
   coordinationTicker = null;
   silentRefreshTimer = null;
+  if (_realtimeChannel) { try { app.supabase?.removeChannel(_realtimeChannel); } catch (_) {} _realtimeChannel = null; }
+}
+
+function bindRealtimeSubscriptions() {
+  if (!app.supabase) return;
+  if (_realtimeChannel) { try { app.supabase.removeChannel(_realtimeChannel); } catch (_) {} }
+  _realtimeChannel = app.supabase
+    .channel("admin-v2-realtime")
+    .on("postgres_changes", { event: "*", schema: "public", table: "leads_v2" }, () => { invalidate("leads"); if (app.activeView === "leads") loadLeads().catch(() => {}); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "tours" }, () => { invalidate("operations"); if (["dashboard", "operations"].includes(app.activeView)) loadOperations().catch(() => {}); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "follow_ups" }, () => { invalidate("operations"); if (["dashboard", "operations"].includes(app.activeView)) loadOperations().catch(() => {}); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "activity_logs" }, () => { invalidate("intelligence"); if (app.activeView === "activity") loadIntelligence().catch(() => {}); })
+    .subscribe();
 }
 
 async function silentRefresh() {
   if (!app.session || document.hidden) return;
-  // Always refresh core real-time data
-  const tasks = [loadIntelligence(), loadOperations()];
-  // Only refresh heavy dashboard data when on dashboard
+  const tasks = [];
+  const maybeLoad = (key, fn, ttl = 55000) => { if (!isFresh(key, ttl)) tasks.push(fn()); };
+  maybeLoad("intelligence", loadIntelligence);
+  maybeLoad("operations", loadOperations);
   if (app.activeView === "dashboard") {
-    tasks.push(loadDashboard(), loadOperatingPlan(), loadRevenueCommand().catch(() => {}), loadEscalations().catch(() => {}), loadPlacementDesk().catch(() => {}), loadRoomIntelligence().catch(() => {}), loadScopeControl().catch(() => {}));
+    maybeLoad("dashboard", loadDashboard);
+    maybeLoad("operatingPlan", loadOperatingPlan);
+    maybeLoad("revenueCommand", () => loadRevenueCommand().catch(() => {}));
+    maybeLoad("escalations", () => loadEscalations().catch(() => {}));
+    maybeLoad("placementDesk", () => loadPlacementDesk().catch(() => {}));
+    maybeLoad("roomIntelligence", () => loadRoomIntelligence().catch(() => {}));
+    maybeLoad("scopeControl", () => loadScopeControl().catch(() => {}));
+    maybeLoad("forecast", () => loadForecast().catch(() => {}));
+    maybeLoad("referralRoi", () => loadReferralRoi().catch(() => {}));
   }
-  // View-specific refreshes
-  if (app.activeView === "leads") tasks.push(loadLeads());
-  if (app.activeView === "outreach") tasks.push(loadOutreachHistory().catch(() => {}));
-  if (app.activeView === "checkins") tasks.push(loadCheckIns());
-  if (app.activeView === "rooms") tasks.push(loadRoomIntelligence().catch(() => {}));
-  try { await Promise.all(tasks); } catch (_) { /* next tick will retry */ }
+  if (app.activeView === "leads") maybeLoad("leads", loadLeads);
+  if (app.activeView === "outreach") {
+    maybeLoad("outreachHistory", () => loadOutreachHistory().catch(() => {}));
+    maybeLoad("referralPartners", () => loadReferralPartners().catch(() => {}));
+  }
+  if (app.activeView === "checkins") maybeLoad("checkIns", loadCheckIns);
+  if (app.activeView === "rooms") maybeLoad("roomIntelligence", () => loadRoomIntelligence().catch(() => {}));
+  if (["tours", "operations"].includes(app.activeView)) maybeLoad("integrations", () => loadIntegrations().catch(() => {}));
+  if (tasks.length) try { await Promise.all(tasks); } catch (_) {}
 }
 
 async function refreshAll() {
   if (!app.session) return;
+  invalidateAll();
   const refreshBtn = $("[data-refresh]");
   if (refreshBtn) { refreshBtn.dataset.loading = "true"; refreshBtn.disabled = true; }
   setStatus("Refreshing...");
@@ -707,6 +706,7 @@ async function loadForecast() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   try {
     app.forecast = await fetchJson(`/api/v2/forecast/occupancy${query}`);
+    markFresh("forecast");
     renderForecast();
   } catch (_) {}
 }
@@ -716,6 +716,7 @@ async function loadReferralRoi() {
   try {
     const data = await fetchJson(`/api/v2/reports/referrals${query}`);
     app.referrals = data.sources || [];
+    markFresh("referralRoi");
     renderReferralRoi();
   } catch (_) {}
 }
@@ -723,6 +724,7 @@ async function loadReferralRoi() {
 async function loadIntegrations() {
   try {
     app.integrations = await fetchJson("/api/v2/integrations");
+    markFresh("integrations");
   } catch (err) {
     app.integrations = { schemaInstalled: false, integrations: [], message: err.message || "Could not load integrations." };
   }
@@ -735,6 +737,7 @@ async function loadReferralPartners() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   const data = await fetchJson(`/api/v2/referral-partners${query}`);
   app.referralPartners = data || { partners: [] };
+  markFresh("referralPartners");
   renderReferralPartners();
 }
 
@@ -742,6 +745,7 @@ async function loadScopeControl() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   try {
     app.scopeControl = await fetchJson(`/api/v2/scope-control${query}`);
+    markFresh("scopeControl");
   } catch (err) {
     app.scopeControl = { error: err.message || "Scope control unavailable." };
   }
@@ -1115,6 +1119,7 @@ async function downloadOwnerScopeReport() {
 async function loadDashboard() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.dashboard = await fetchJson(`/api/v2/dashboard${query}`);
+  markFresh("dashboard");
   renderDashboard();
 }
 
@@ -1122,6 +1127,7 @@ async function loadOperatingPlan() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   try {
     app.operatingPlan = await fetchJson(`/api/v2/operating-plan${query}`);
+    markFresh("operatingPlan");
   } catch (err) {
     app.operatingPlan = { items: [], summary: {}, schemaInstalled: false, warning: err.message || "Could not load Daily Operating Plan." };
   }
@@ -1131,18 +1137,25 @@ async function loadOperatingPlan() {
 async function loadIntelligence() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.intelligence = await fetchJson(`/api/v2/intelligence${query}`);
+  markFresh("intelligence");
   renderIntelligence();
 }
 
-async function loadLeads() {
+async function loadLeads(page = app.leadsPagination?.page || 1) {
+  const reqId = ++_leadsReqId;
   const params = new URLSearchParams();
   if (app.selectedLocationId) params.set("locationId", app.selectedLocationId);
   const status = $("[data-lead-status-filter]").value;
   const search = $("[data-lead-search]").value.trim();
   if (status) params.set("status", status);
   if (search) params.set("search", search);
+  params.set("page", String(page));
+  params.set("limit", "100");
   const data = await fetchJson(`/api/v2/leads?${params.toString()}`);
+  if (reqId !== _leadsReqId) return; // stale response — newer request in flight
   app.leads = data.leads || [];
+  app.leadsPagination = { page: data.page || 1, pageCount: data.pageCount || 1, total: data.total || 0, limit: data.limit || 100 };
+  markFresh("leads");
   renderLeads();
   renderRevenueCommand();
   hydrateOutreachFilters();
@@ -1161,6 +1174,7 @@ async function loadOutreachHistory() {
   const suffix = params.toString() ? `?${params.toString()}` : "";
   const data = await fetchJson(`/api/v2/outreach/history${suffix}`);
   app.outreach.campaigns = data.campaigns || [];
+  markFresh("outreachHistory");
   renderOutreachHistory();
 }
 
@@ -1168,6 +1182,7 @@ async function loadOperations() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.operations = await fetchJson(`/api/v2/operations${query}`);
   if (!Array.isArray(app.operations.rooms)) app.operations.rooms = [];
+  markFresh("operations");
   renderOperations();
 }
 
@@ -1175,6 +1190,7 @@ async function loadWorkflows() {
   const params = new URLSearchParams({ type: "move_in" });
   if (app.selectedLocationId) params.set("locationId", app.selectedLocationId);
   app.workflows = await fetchJson(`/api/v2/workflows?${params.toString()}`);
+  markFresh("workflows");
   renderMoveInWorkflows();
 }
 
@@ -1187,6 +1203,7 @@ async function loadEscalations() {
   }
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.escalations = await fetchJson(`/api/v2/escalations${query}`);
+  markFresh("escalations");
   renderSuperEscalations();
   renderSuperNotificationBell();
 }
@@ -1200,18 +1217,21 @@ async function loadPlacementDesk() {
   }
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.placementDesk = await fetchJson(`/api/v2/placement-desk${query}`);
+  markFresh("placementDesk");
   renderPlacementDesk();
 }
 
 async function loadRoomIntelligence() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.roomIntelligence = await fetchJson(`/api/v2/rooms/availability${query}`);
+  markFresh("roomIntelligence");
   renderRevenueCommand();
 }
 
 async function loadRevenueCommand() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   app.revenueCommand = await fetchJson(`/api/v2/revenue-command${query}`);
+  markFresh("revenueCommand");
   renderRevenueCommand();
   renderMissionContextRail();
 }
@@ -1265,6 +1285,7 @@ function setView(view, options = {}) {
     loadIntelligenceRules();
   }
   if (view === "checkins") loadCheckIns();
+  if (view === "care-ops") loadCareOpsActiveTab();
   if (view === "outreach") {
     hydrateOutreachFilters();
     renderOutreachPreview();
@@ -2546,6 +2567,8 @@ function setActiveCommand(id) {
   else localStorage.removeItem("ccsl:v2-active-command");
   renderCommandCenter();
   renderWorkSession();
+  renderTodayWorkHome();
+  renderMissionContextRail();
 }
 
 function commandCenterState(items) {
@@ -4034,7 +4057,21 @@ function renderLeads() {
   setLeadView(app.leadView);
   renderExecutionSystem();
   renderOutreachPreview();
+  renderLeadsPagination();
   iconRefresh();
+}
+
+function renderLeadsPagination() {
+  const bar = $("[data-leads-pagination]");
+  if (!bar) return;
+  const { page, pageCount, total } = app.leadsPagination;
+  if (pageCount <= 1) { bar.hidden = true; return; }
+  bar.hidden = false;
+  $("[data-leads-page-info]", bar).textContent = `Page ${page} of ${pageCount} (${total} leads)`;
+  const prevBtn = $("[data-leads-prev]", bar);
+  const nextBtn = $("[data-leads-next]", bar);
+  prevBtn.disabled = page <= 1;
+  nextBtn.disabled = page >= pageCount;
 }
 
 function hydrateOutreachFilters() {
@@ -4542,6 +4579,7 @@ async function loadCheckIns() {
   const query = app.selectedLocationId ? `?locationId=${encodeURIComponent(app.selectedLocationId)}` : "";
   const data = await fetchJson(`/api/v2/check-ins${query}`);
   app.checkIns = data.checkIns || [];
+  markFresh("checkIns");
   renderCheckIns();
 }
 
@@ -4921,13 +4959,28 @@ async function handleCalendarIntegrationClick(event) {
   }
 }
 
+function findMatchingLead(row) {
+  const name = (row.visitor_name || row.name || "").trim().toLowerCase();
+  const email = (row.email || "").trim().toLowerCase();
+  return (app.leads || []).find((l) => {
+    if (email && l.email && l.email.trim().toLowerCase() === email) return true;
+    if (name && l.name && l.name.trim().toLowerCase() === name) return true;
+    return false;
+  }) || null;
+}
+
 function renderCheckIns() {
-  renderCards("[data-checkins-list]", app.checkIns, (row) => `
+  renderCards("[data-checkins-list]", app.checkIns, (row) => {
+    const match = findMatchingLead(row);
+    return `
     <div class="card-head"><strong>${escapeHtml(row.visitor_name || row.name || "Visitor")}</strong><span class="badge">${escapeHtml(row.visit_purpose || "Visit")}</span></div>
     <small>${escapeHtml(row.community || "")} &middot; ${formatDate(row.created_at)}</small>
     <small>${escapeHtml(row.phone || "")}${row.email ? ` &middot; ${escapeHtml(row.email)}` : ""}</small>
     <small>${escapeHtml(row.visiting_resident || row.resident || "")}</small>
-  `);
+    ${match ? `<div class="card-actions"><button class="ghost" data-checkin-lead="${escapeHtml(match.id)}"><i data-lucide="user"></i>View lead</button></div>` : ""}
+  `;
+  });
+  $$("[data-checkin-lead]").forEach((btn) => btn.addEventListener("click", () => openLeadDetail(btn.dataset.checkinLead)));
   iconRefresh();
 }
 
@@ -5614,8 +5667,10 @@ function buildMarketingActionsFromReferrals() {
 
 async function loadUsers() {
   if (!app.user?.isSuperAdmin) return;
+  if (isFresh("users", 120000)) return;
   try {
     const data = await fetchJson("/api/v2/users");
+    markFresh("users");
     renderCards("[data-users-list]", data.users || [], (user) => `
       <div class="card-head"><strong>${escapeHtml(user.full_name || user.email)}</strong><span class="badge">${escapeHtml(user.role)}</span></div>
       <small>${escapeHtml(user.email)} &middot; ${user.active ? "Active" : "Inactive"}</small>
@@ -5637,8 +5692,10 @@ async function loadUsers() {
 
 async function loadIntelligenceRules() {
   if (!app.user?.isSuperAdmin) return;
+  if (isFresh("intelligenceRules", 120000)) return;
   try {
     app.intelligenceRules = await fetchJson("/api/v2/intelligence/rules");
+    markFresh("intelligenceRules");
     renderIntelligenceRules();
   } catch (err) {
     const target = $("[data-intelligence-rules]");
@@ -5788,6 +5845,7 @@ async function handleCreateUser(event) {
   await fetchJson("/api/v2/users", { method: "POST", body });
   form.reset();
   $("[data-create-user-modal]").close();
+  invalidate("users");
   await loadUsers();
   setStatus("User created.");
 }
@@ -5795,6 +5853,7 @@ async function handleCreateUser(event) {
 async function updateUserActive(id, active) {
   setStatus(active ? "Reactivating user..." : "Deactivating user...");
   await fetchJson(`/api/v2/users/${id}/active`, { method: "PATCH", body: { active } });
+  invalidate("users");
   await loadUsers();
   setStatus("");
 }
@@ -5839,7 +5898,20 @@ async function handleLeadExport() {
 }
 
 async function openLeadDetail(id) {
-  const detail = await fetchJson(`/api/v2/leads/${id}`);
+  const modal = $("[data-lead-detail-modal]");
+  const detailStatus = $("[data-detail-status]");
+  if (modal) {
+    $("[data-detail-name]").textContent = "Loading…";
+    if (detailStatus) detailStatus.textContent = "";
+    modal.showModal();
+  }
+  let detail;
+  try {
+    detail = await fetchJson(`/api/v2/leads/${id}`);
+  } catch (err) {
+    if (detailStatus) detailStatus.textContent = err.message || "Could not load lead.";
+    return;
+  }
   app.selectedLeadDetail = detail;
   const lead = detail.lead;
   $("[data-detail-name]").textContent = lead.full_name;
@@ -5871,8 +5943,7 @@ async function openLeadDetail(id) {
       ${item.notes || item.outcome ? `<small>${escapeHtml(item.notes || item.outcome || "")}</small>` : ""}
     `;
   });
-  $("[data-detail-status]").textContent = "";
-  $("[data-lead-detail-modal]").showModal();
+  if (detailStatus) detailStatus.textContent = "";
   iconRefresh();
 }
 
@@ -6238,32 +6309,6 @@ async function withButtonLoading(button, fn) {
   }
 }
 
-async function fetchJson(url, options = {}) {
-  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
-  if (!options.skipAuth) {
-    const session = app.session || (app.supabase ? (await app.supabase.auth.getSession())?.data?.session : readStoredSession());
-    if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-  }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 15000);
-  let response;
-  try {
-    response = await fetch(url, {
-    method: options.method || "GET",
-    headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      signal: controller.signal
-    });
-  } catch (err) {
-    if (err.name === "AbortError") throw new Error(`Request timed out: ${url}`);
-    throw err;
-  } finally {
-    clearTimeout(timeout);
-  }
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed.");
-  return data;
-}
 
 function renderCards(selector, rows, render) {
   const target = $(selector);
@@ -6348,9 +6393,9 @@ function bar(label, value, max, percentValue = null) {
   const percent = Math.max(3, Math.min(100, Math.round((numeric / max) * 100)));
   return `
     <div class="bar">
-      <span>${escapeHtml(label)}</span>
+      <span class="bar-label">${escapeHtml(label)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${percent}%"></div></div>
-      <strong>${escapeHtml(value)}</strong>
+      <strong class="bar-value">${escapeHtml(value)}</strong>
     </div>
   `;
 }
@@ -6597,42 +6642,4 @@ function renderCoordIntelItem(event) {
 
 function setLoginStatus(message) {
   $("[data-login-status]").textContent = message || "";
-}
-
-function readStoredSession() {
-  try {
-    // Try sessionStorage first (current tab), fall back to localStorage (migrating old sessions)
-    const raw = sessionStorage.getItem("ccsl:v2-session") || localStorage.getItem("ccsl:v2-session");
-    if (raw) {
-      // Migrate to sessionStorage if found in localStorage
-      if (!sessionStorage.getItem("ccsl:v2-session") && localStorage.getItem("ccsl:v2-session")) {
-        sessionStorage.setItem("ccsl:v2-session", raw);
-        localStorage.removeItem("ccsl:v2-session");
-      }
-    }
-    return raw ? JSON.parse(raw) : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function storeSession(session) {
-  if (!session) {
-    sessionStorage.removeItem("ccsl:v2-session");
-    localStorage.removeItem("ccsl:v2-session");
-  } else {
-    sessionStorage.setItem("ccsl:v2-session", JSON.stringify(session));
-  }
-}
-
-function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
-}
-
-function iconRefresh() {
-  window.lucide?.createIcons();
 }

@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260518-improvements">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260522-care-ops">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -56,6 +56,8 @@
           <button data-view="tasks"><i data-lucide="list-checks"></i>Tasks</button>
           <button data-view="residents"><i data-lucide="bed-double"></i>Residents</button>
           <button data-view="checkins"><i data-lucide="clipboard-check"></i>Check-Ins</button>
+          <small>Care Ops</small>
+          <button data-view="care-ops"><i data-lucide="heart-pulse"></i>Care Ops</button>
           <small>Manage</small>
           <button data-view="reports"><i data-lucide="bar-chart-3"></i>Reports</button>
           <button data-view="documents"><i data-lucide="folder-open"></i>Documents</button>
@@ -314,6 +316,11 @@
                 <thead><tr><th><input type="checkbox" data-bulk-select-all aria-label="Select all"></th><th>Name</th><th>Phone</th><th>Location</th><th>Source</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
                 <tbody data-leads-table></tbody>
               </table>
+              <div class="pagination-bar" data-leads-pagination hidden>
+                <button class="ghost" data-leads-prev><i data-lucide="chevron-left"></i>Prev</button>
+                <span data-leads-page-info></span>
+                <button class="ghost" data-leads-next>Next<i data-lucide="chevron-right"></i></button>
+              </div>
             </div>
             <div class="lead-pipeline" data-lead-pipeline></div>
           </article>
@@ -606,7 +613,7 @@
         <section class="view" data-panel="reports">
           <article class="panel">
             <div class="panel-head"><div><p class="eyebrow">Owner visibility</p><h2>Reports</h2></div></div>
-            <div class="chart-grid" data-report-grid></div>
+            <div class="chart-grid report-grid" data-report-grid></div>
             <div class="marketing-action-grid" data-marketing-actions></div>
             <div class="lost-recovery-panel" data-lost-recovery></div>
           </article>
@@ -628,6 +635,81 @@
             </form>
             <p class="helper-text" data-referral-partner-note hidden></p>
             <div class="cards-list" data-referral-partners></div>
+          </article>
+        </section>
+
+        <section class="view" data-panel="care-ops">
+          <article class="panel care-ops-panel">
+            <div class="panel-head">
+              <div><p class="eyebrow">Care Operations</p><h2 data-careops-title>Incidents</h2></div>
+              <div class="care-ops-subnav" role="tablist">
+                <button class="active" data-careops-tab="incidents" role="tab"><i data-lucide="alert-triangle"></i>Incidents</button>
+                <button data-careops-tab="handoff" role="tab"><i data-lucide="repeat"></i>Shift Handoff</button>
+                <button data-careops-tab="family" role="tab"><i data-lucide="messages-square"></i>Family Updates</button>
+                <button data-careops-tab="schedule" role="tab"><i data-lucide="calendar-clock"></i>Schedule</button>
+              </div>
+            </div>
+
+            <div class="care-ops-banner" data-careops-banner hidden></div>
+
+            <section class="care-ops-tabpanel active" data-careops-pane="incidents">
+              <div class="careops-toolbar">
+                <select data-incident-status-filter>
+                  <option value="">All statuses</option>
+                  <option value="open">Open</option>
+                  <option value="reviewing">Reviewing</option>
+                  <option value="closed">Closed</option>
+                </select>
+                <select data-incident-severity-filter>
+                  <option value="">All severities</option>
+                  <option>Low</option>
+                  <option>Medium</option>
+                  <option>High</option>
+                  <option>Critical</option>
+                </select>
+                <button class="primary" data-open-incident-form><i data-lucide="plus"></i>Report incident</button>
+              </div>
+              <div class="cards-list" data-incidents-list>
+                <p class="empty-state">Loading incidents...</p>
+              </div>
+            </section>
+
+            <section class="care-ops-tabpanel" data-careops-pane="handoff" hidden>
+              <div class="careops-toolbar">
+                <button class="primary" data-open-handoff-form><i data-lucide="repeat"></i>Start handoff</button>
+              </div>
+              <div class="careops-cols">
+                <section>
+                  <h3>Unacknowledged for you</h3>
+                  <div class="cards-list" data-handoffs-unack><p class="empty-state">Loading...</p></div>
+                </section>
+                <section>
+                  <h3>Recent handoffs</h3>
+                  <div class="cards-list" data-handoffs-recent></div>
+                </section>
+              </div>
+            </section>
+
+            <section class="care-ops-tabpanel" data-careops-pane="family" hidden>
+              <div class="careops-toolbar">
+                <select data-family-resident-filter>
+                  <option value="">Select resident...</option>
+                </select>
+                <button class="primary" data-open-family-form><i data-lucide="send"></i>Send update</button>
+              </div>
+              <div class="cards-list" data-family-updates-list><p class="empty-state">Pick a resident to see past updates.</p></div>
+            </section>
+
+            <section class="care-ops-tabpanel" data-careops-pane="schedule" hidden>
+              <div class="careops-toolbar">
+                <button class="ghost" data-schedule-prev><i data-lucide="chevron-left"></i>Prev week</button>
+                <strong data-schedule-week-label>--</strong>
+                <button class="ghost" data-schedule-next>Next week<i data-lucide="chevron-right"></i></button>
+                <button class="primary" data-open-shift-form><i data-lucide="plus"></i>Add shift</button>
+                <button class="ghost" data-publish-week><i data-lucide="check-circle-2"></i>Publish week</button>
+              </div>
+              <div class="schedule-grid" data-schedule-grid><p class="empty-state">Loading schedule...</p></div>
+            </section>
           </article>
         </section>
 
@@ -878,14 +960,95 @@
         <button class="ghost" data-close-kbd-modal><i data-lucide="x"></i></button>
       </div>
       <div class="kbd-modal-body">
+        <div class="kbd-row"><span>New lead</span><kbd>c</kbd></div>
+        <div class="kbd-row"><span>Search / filter leads</span><kbd>/</kbd></div>
+        <div class="kbd-row"><span>Command palette</span><kbd>Ctrl K</kbd></div>
         <div class="kbd-row"><span>Next action in queue</span><kbd>n</kbd></div>
         <div class="kbd-row"><span>Mark active action done</span><kbd>d</kbd></div>
-        <div class="kbd-row"><span>Command palette</span><kbd>Ctrl K</kbd></div>
-        <div class="kbd-row"><span>Search / filter</span><kbd>/</kbd></div>
-        <div class="kbd-row"><span>Show this help</span><kbd>?</kbd></div>
         <div class="kbd-row"><span>Toggle sidebar</span><kbd>Ctrl \</kbd></div>
+        <div class="kbd-row"><span>Show this help</span><kbd>?</kbd></div>
         <div class="kbd-row"><span>Close modal</span><kbd>Esc</kbd></div>
       </div>
+    </dialog>
+
+    <dialog class="modal" data-incident-modal>
+      <form class="modal-card" data-incident-form>
+        <header><h2>Report incident</h2><button type="button" data-close-incident><i data-lucide="x"></i></button></header>
+        <label>Resident<select name="residentId" data-incident-resident-select><option value="">Select resident...</option></select></label>
+        <label>Type
+          <select name="type">
+            <option>Fall</option><option>Medication</option><option>Behavioral</option>
+            <option>Injury</option><option>Elopement</option><option>Other</option>
+          </select>
+        </label>
+        <label>Severity
+          <select name="severity" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </label>
+        <label>When<input name="incidentAt" type="datetime-local"></label>
+        <label>Description<textarea name="description" rows="4" required placeholder="What happened, who responded, any witnesses..."></textarea></label>
+        <label class="checkbox-row"><input type="checkbox" name="followUpRequired"> Follow-up required</label>
+        <label>Follow-up notes<textarea name="followUpNotes" rows="2"></textarea></label>
+        <button type="submit"><i data-lucide="save"></i>Save incident</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-incident-detail-modal>
+      <section class="modal-card" data-incident-detail-card>
+        <header><h2>Incident</h2><button type="button" data-close-incident-detail><i data-lucide="x"></i></button></header>
+        <div data-incident-detail-body></div>
+      </section>
+    </dialog>
+
+    <dialog class="modal" data-handoff-modal>
+      <form class="modal-card" data-handoff-form>
+        <header><h2>Start shift handoff</h2><button type="button" data-close-handoff><i data-lucide="x"></i></button></header>
+        <label>Shift label<input name="shiftLabel" placeholder="Day -> Evening"></label>
+        <label>To staff (optional broadcast)<select name="toUserId" data-handoff-to-select><option value="">Broadcast to next shift</option></select></label>
+        <label>Summary<textarea name="summary" rows="4" required placeholder="Key things the next shift needs to know..."></textarea></label>
+        <fieldset class="repeater" data-handoff-alerts>
+          <legend>Resident alerts</legend>
+          <div data-handoff-alerts-rows></div>
+          <button type="button" class="ghost" data-add-alert><i data-lucide="plus"></i>Add alert</button>
+        </fieldset>
+        <fieldset class="repeater" data-handoff-tasks>
+          <legend>Pending tasks</legend>
+          <div data-handoff-tasks-rows></div>
+          <button type="button" class="ghost" data-add-task><i data-lucide="plus"></i>Add task</button>
+        </fieldset>
+        <button type="submit"><i data-lucide="send"></i>Send handoff</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-family-modal>
+      <form class="modal-card" data-family-form>
+        <header><h2>Send family update</h2><button type="button" data-close-family><i data-lucide="x"></i></button></header>
+        <label>Resident<select name="residentId" data-family-resident-select required><option value="">Select resident...</option></select></label>
+        <div class="seg-toggle" role="tablist">
+          <button type="button" class="active" data-family-channel="email" role="tab">Email</button>
+          <button type="button" data-family-channel="sms" role="tab" disabled title="SMS provider not configured">SMS</button>
+        </div>
+        <label>Recipient<input name="recipient" type="email" required placeholder="family@example.com"></label>
+        <label>Subject<input name="subject" placeholder="Weekly update on Mom"></label>
+        <label>Message<textarea name="body" rows="6" required></textarea></label>
+        <button type="submit"><i data-lucide="send"></i>Preview &amp; send</button>
+      </form>
+    </dialog>
+
+    <dialog class="modal" data-shift-modal>
+      <form class="modal-card" data-shift-form>
+        <header><h2>Add shift</h2><button type="button" data-close-shift><i data-lucide="x"></i></button></header>
+        <label>Staff<select name="userId" data-shift-user-select required><option value="">Select staff...</option></select></label>
+        <label>Role<input name="role" placeholder="CNA, Med Tech, RN"></label>
+        <label>Start<input name="startsAt" type="datetime-local" required></label>
+        <label>End<input name="endsAt" type="datetime-local" required></label>
+        <label>Notes<textarea name="notes" rows="2"></textarea></label>
+        <button type="submit"><i data-lucide="save"></i>Save shift</button>
+      </form>
     </dialog>
 
     <!-- Styled confirm dialog (replaces window.confirm) -->
@@ -902,6 +1065,11 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2.js?v=20260518-improvements"></script>
+    <script src="/admin-v2-state.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2-session.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2-api.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2-utils.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2-careops.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2.js?v=20260522-care-ops"></script>
   </body>
 </html>
