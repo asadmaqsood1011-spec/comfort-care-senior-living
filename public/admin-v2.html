@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/admin-v2.css?v=20260522-care-ops">
+    <link rel="stylesheet" href="/admin-v2.css?v=20260523-care-ops-r2">
   </head>
   <body>
     <main class="auth-screen" data-auth-screen>
@@ -974,7 +974,8 @@
     <dialog class="modal" data-incident-modal>
       <form class="modal-card" data-incident-form>
         <header><h2>Report incident</h2><button type="button" data-close-incident><i data-lucide="x"></i></button></header>
-        <label>Resident<select name="residentId" data-incident-resident-select><option value="">Select resident...</option></select></label>
+        <label>Resident (pick from list, or just type name)<select name="residentId" data-incident-resident-select><option value="">-- type name below --</option></select></label>
+        <label>Resident name<input name="residentName" placeholder="e.g. Mary Johnson"></label>
         <label>Type
           <select name="type">
             <option>Fall</option><option>Medication</option><option>Behavioral</option>
@@ -1027,7 +1028,7 @@
     <dialog class="modal" data-family-modal>
       <form class="modal-card" data-family-form>
         <header><h2>Send family update</h2><button type="button" data-close-family><i data-lucide="x"></i></button></header>
-        <label>Resident<select name="residentId" data-family-resident-select required><option value="">Select resident...</option></select></label>
+        <label>Resident (optional)<select name="residentId" data-family-resident-select><option value="">-- not linked to a resident --</option></select></label>
         <div class="seg-toggle" role="tablist">
           <button type="button" class="active" data-family-channel="email" role="tab">Email</button>
           <button type="button" data-family-channel="sms" role="tab" disabled title="SMS provider not configured">SMS</button>
@@ -1043,6 +1044,7 @@
       <form class="modal-card" data-shift-form>
         <header><h2>Add shift</h2><button type="button" data-close-shift><i data-lucide="x"></i></button></header>
         <label>Staff<select name="userId" data-shift-user-select required><option value="">Select staff...</option></select></label>
+        <p class="helper-text" data-shift-staff-help hidden>No staff assigned to this location yet. Grant location access to users in Users tab.</p>
         <label>Role<input name="role" placeholder="CNA, Med Tech, RN"></label>
         <label>Start<input name="startsAt" type="datetime-local" required></label>
         <label>End<input name="endsAt" type="datetime-local" required></label>
@@ -1065,11 +1067,11 @@
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/admin-v2-state.js?v=20260522-care-ops"></script>
-    <script src="/admin-v2-session.js?v=20260522-care-ops"></script>
-    <script src="/admin-v2-api.js?v=20260522-care-ops"></script>
-    <script src="/admin-v2-utils.js?v=20260522-care-ops"></script>
-    <script src="/admin-v2-careops.js?v=20260522-care-ops"></script>
-    <script src="/admin-v2.js?v=20260522-care-ops"></script>
+    <script src="/admin-v2-state.js?v=20260523-care-ops-r2"></script>
+    <script src="/admin-v2-session.js?v=20260523-care-ops-r2"></script>
+    <script src="/admin-v2-api.js?v=20260523-care-ops-r2"></script>
+    <script src="/admin-v2-utils.js?v=20260523-care-ops-r2"></script>
+    <script src="/admin-v2-careops.js?v=20260523-care-ops-r2"></script>
+    <script src="/admin-v2.js?v=20260523-care-ops-r2"></script>
   </body>
 </html>

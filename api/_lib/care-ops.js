@@ -251,8 +251,7 @@ async function listFamilyUpdates(db, user, params = {}) {
 
 async function sendFamilyUpdate(db, user, body = {}) {
   const locationId = requireDefaultLocation(user, body.locationId);
-  const residentId = clean(body.residentId);
-  if (!residentId) validationError("Resident is required.");
+  const residentId = clean(body.residentId) || null;
   const channel = clean(body.channel) || "email";
   if (!["email", "sms"].includes(channel)) validationError("Invalid channel.");
   const recipient = clean(body.recipient);
@@ -275,7 +274,7 @@ async function sendFamilyUpdate(db, user, body = {}) {
   const status = sendResult?.status === "Sent" ? "sent" : (sendResult?.status === "Demo Sent" ? "sent" : "failed");
   const insert = {
     location_id: locationId,
-    resident_id: residentId,
+    resident_id: residentId || null,
     direction: "outbound_family",
     channel,
     provider: channel === "email" ? (sendResult?.mode === "live" ? "gmail" : "demo") : "sms",
@@ -519,8 +518,17 @@ async function listLocationStaff(db, user, params = {}) {
       email: p.email,
       role: p.role,
       accessLevel: accessByUser[p.id] || ""
-    }))
-    .sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)));
+    }));
+  if (!staff.some((s) => s.id === user.id)) {
+    staff.push({
+      id: user.id,
+      fullName: user.profile?.full_name || user.email,
+      email: user.email,
+      role: user.role,
+      accessLevel: "self"
+    });
+  }
+  staff.sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)));
   return { staff };
 }
 

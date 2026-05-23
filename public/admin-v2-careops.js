@@ -62,16 +62,20 @@ async function loadCareOpsActiveTab() {
 
 async function ensureCareOpsRoster(force = false) {
   const locationId = app.selectedLocationId || (app.locations[0]?.id || "");
-  if (!locationId) return;
-  if (!force && app.careOps.staffRoster.length && app.careOps.residentsCache.length) {
-    populateCareOpsSelects();
-    return;
-  }
+  if (!locationId) { populateCareOpsSelects(); return; }
   try {
     const staffRes = await fetchJson(`/api/v2/care/staff?locationId=${encodeURIComponent(locationId)}`);
     app.careOps.staffRoster = staffRes.staff || [];
   } catch (err) {
     console.warn("careops staff load:", err.message);
+  }
+  if (!app.operations?.residents?.length) {
+    try {
+      const ops = await fetchJson(`/api/v2/operations?locationId=${encodeURIComponent(locationId)}`);
+      if (ops?.residents) app.operations = { ...(app.operations || {}), ...ops };
+    } catch (err) {
+      console.warn("careops operations load:", err.message);
+    }
   }
   app.careOps.residentsCache = app.operations?.residents || [];
   populateCareOpsSelects();
@@ -94,6 +98,8 @@ function populateCareOpsSelects() {
     staff.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.fullName)}${s.role ? ` (${escapeHtml(s.role)})` : ""}</option>`).join("");
   const userSel = $("[data-shift-user-select]");
   if (userSel) userSel.innerHTML = staffOptions;
+  const staffHelp = $("[data-shift-staff-help]");
+  if (staffHelp) staffHelp.hidden = staff.length > 1; // hide if more than just current user
   const handoffOptions = `<option value="">Broadcast to next shift</option>` +
     staff.filter((s) => s.id !== app.user?.id).map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.fullName)}</option>`).join("");
   const handoffSel = $("[data-handoff-to-select]");
@@ -169,10 +175,11 @@ async function handleIncidentSubmit(event) {
   const fd = new FormData(form);
   const residentId = fd.get("residentId") || null;
   const resident = app.careOps.residentsCache.find((r) => r.id === residentId);
+  const typedName = (fd.get("residentName") || "").toString().trim();
   const body = {
     locationId: app.selectedLocationId || "",
     residentId,
-    residentName: resident ? (resident.full_name || resident.name || "") : "",
+    residentName: typedName || (resident ? (resident.full_name || resident.name || "") : ""),
     type: fd.get("type") || "Other",
     severity: fd.get("severity") || "Low",
     description: fd.get("description") || "",
