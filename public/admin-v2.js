@@ -654,7 +654,12 @@ async function silentRefresh() {
   if (app.activeView === "checkins") maybeLoad("checkIns", loadCheckIns);
   if (app.activeView === "rooms") maybeLoad("roomIntelligence", () => loadRoomIntelligence().catch(() => {}));
   if (["tours", "operations"].includes(app.activeView)) maybeLoad("integrations", () => loadIntegrations().catch(() => {}));
-  if (tasks.length) try { await Promise.all(tasks); } catch (_) {}
+  if (tasks.length) {
+    try {
+      await Promise.all(tasks);
+      renderCommandCenterSnapshot();
+    } catch (_) {}
+  }
 }
 
 async function runRefreshTask(label, task, timeoutMs = 20000) {
@@ -705,6 +710,7 @@ async function refreshAll() {
       throw new Error(message);
     }
     if (app.activeView === "checkins") await runRefreshTask("check-ins", loadCheckIns);
+    renderCommandCenterSnapshot();
   } finally {
     if (refreshBtn) { delete refreshBtn.dataset.loading; refreshBtn.disabled = false; }
   }
@@ -1433,6 +1439,23 @@ function renderDashboard() {
   renderReports();
   renderIntelligence();
   renderExecutionSystem();
+}
+
+function renderCommandCenterSnapshot() {
+  const renderers = [
+    renderTodayWorkHome,
+    renderSystemHealth,
+    renderDashboardCharts,
+    renderDashboardRoomBoard,
+    renderRevenueCommand,
+    renderDailyOperatingPlanHome,
+    renderMissionContextRail,
+    renderReports
+  ];
+  renderers.forEach((render) => {
+    try { render(); } catch (err) { console.warn("Command Center render skipped:", err?.message || err); }
+  });
+  iconRefresh();
 }
 
 function renderDashboardCharts() {
