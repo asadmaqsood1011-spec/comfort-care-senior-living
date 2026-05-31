@@ -1363,6 +1363,10 @@ function setView(view, options = {}) {
     renderOutreachPreview();
     loadOutreachHistory().catch((err) => pushToast(err.message || "Could not load outreach history.", "error"));
   }
+  if (view === "reports") {
+    if (app.dashboard) renderReports();
+    else loadDashboard().catch((err) => pushToast(err.message || "Could not load reports.", "error"));
+  }
   renderMissionContextRail();
   iconRefresh();
 }
@@ -1382,6 +1386,7 @@ function renderDashboard() {
   renderTodayWorkHome();
   renderSystemHealth();
   renderDashboardCharts();
+  renderReports();
   renderAppConnectionsHome();
   renderAdmissionsValueLayer();
   renderDashboardRoomBoard();
@@ -5643,16 +5648,22 @@ function roomCurrentStatus(room = {}) {
 }
 
 function renderReports() {
+  const target = $("[data-report-grid]");
+  if (!target) return;
   const rows = app.dashboard?.locationComparison || [];
   const maxLeads = Math.max(1, ...rows.map((row) => row.leads));
-  $("[data-report-grid]").innerHTML = `
-    <article class="card">
+  target.innerHTML = `
+    <article class="card report-card">
       <strong>Leads by location</strong>
-      ${rows.map((row) => bar(row.name, row.leads, maxLeads)).join("")}
+      <div class="report-list">
+        ${rows.map((row) => reportBar(row.name, row.leads, maxLeads)).join("")}
+      </div>
     </article>
-    <article class="card">
+    <article class="card report-card">
       <strong>Conversion by location</strong>
-      ${rows.map((row) => bar(row.name, `${row.conversionRate}%`, 100, row.conversionRate)).join("")}
+      <div class="report-list">
+        ${rows.map((row) => reportBar(row.name, `${row.conversionRate}%`, 100, row.conversionRate)).join("")}
+      </div>
     </article>
   `;
   renderMarketingActions();
@@ -6468,6 +6479,18 @@ function bar(label, value, max, percentValue = null) {
       <span class="bar-label">${escapeHtml(label)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${percent}%"></div></div>
       <strong class="bar-value">${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function reportBar(label, value, max, percentValue = null) {
+  const numeric = percentValue ?? (Number(value) || 0);
+  const percent = Math.max(3, Math.min(100, Math.round((numeric / max) * 100)));
+  return `
+    <div class="report-row">
+      <span class="report-label">${escapeHtml(label)}</span>
+      <strong class="report-value">${escapeHtml(value)}</strong>
+      <div class="report-track"><div class="report-fill" style="width:${percent}%"></div></div>
     </div>
   `;
 }

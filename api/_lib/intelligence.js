@@ -4,6 +4,7 @@ const { assertLocationAccess } = require("./v2-auth");
 
 const ACTIVE_EVENT_STATUSES = ["active", "acknowledged"];
 const EVENT_STATUS = new Set(["active", "acknowledged", "resolved"]);
+const INACTIVE_FOLLOW_UP_STATUSES = new Set(["completed", "archived", "missed", "done"]);
 
 function isMissingTable(error) {
   const text = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""} ${error?.code || ""}`.toLowerCase();
@@ -139,6 +140,8 @@ function activityMatches(row, patterns = []) {
 function confidenceForType(type, metadata = {}) {
   if (["follow_up_overdue", "high_intent_lead_uncontacted", "tour_no_show_risk"].includes(type)) return "high";
   if (type === "occupancy_warning" && Number(metadata.capacity || 0) > 0) return "high";
+  if (["high_intent_no_compatible_room", "maintenance_room_blocks_occupancy", "vacant_room_revenue_risk"].includes(type)) return "high";
+  if (["available_room_no_match", "reserved_room_pending_move_in", "room_inventory_occupancy_warning"].includes(type)) return "medium";
   if (["lead_stale", "response_time_decline", "recovery_opportunity_detected", "inactive_pipeline_segment"].includes(type)) return "medium";
   return "low";
 }
@@ -153,6 +156,12 @@ function actionForType(type) {
     inactive_pipeline_segment: "open_queue",
     response_time_decline: "view_details",
     occupancy_warning: "escalate",
+    available_room_no_match: "view_details",
+    high_intent_no_compatible_room: "view_details",
+    vacant_room_revenue_risk: "view_details",
+    reserved_room_pending_move_in: "view_details",
+    maintenance_room_blocks_occupancy: "view_details",
+    room_inventory_occupancy_warning: "view_details",
     conversion_drop_detected: "view_details",
     pipeline_shortfall_risk: "view_details"
   }[type] || "view_details";
@@ -177,6 +186,12 @@ function reasonForEvent(type, metadata = {}) {
     inactive_pipeline_segment: "Open leads exist but pipeline movement has stalled.",
     response_time_decline: `First-contact time moved from ${metadata.prior_hours || "prior"}h to ${metadata.current_hours || "current"}h.`,
     occupancy_warning: "Occupancy is below the configured target.",
+    available_room_no_match: "Available inventory has no compatible active demand.",
+    high_intent_no_compatible_room: "A hot lead has no compatible available room.",
+    vacant_room_revenue_risk: "Available room inventory is carrying monthly revenue risk.",
+    reserved_room_pending_move_in: "A reserved room still needs move-in confirmation.",
+    maintenance_room_blocks_occupancy: "A room blocker is reducing move-in capacity.",
+    room_inventory_occupancy_warning: "Room inventory occupancy is below target.",
     conversion_drop_detected: "Current conversion trend is weaker than the prior period.",
     pipeline_shortfall_risk: "No hot active leads or scheduled tours are available for the location."
   }[type] || "Rule-based operational signal detected.";
@@ -192,6 +207,12 @@ function conciseRecommendation(type) {
     inactive_pipeline_segment: "Review location leads",
     response_time_decline: "Review response workflow",
     occupancy_warning: "Escalate to manager",
+    available_room_no_match: "Review room demand",
+    high_intent_no_compatible_room: "Review placement options",
+    vacant_room_revenue_risk: "Review available rooms",
+    reserved_room_pending_move_in: "Confirm move-in blockers",
+    maintenance_room_blocks_occupancy: "Assign room readiness work",
+    room_inventory_occupancy_warning: "Prioritize room matches",
     conversion_drop_detected: "Review tour outcomes",
     pipeline_shortfall_risk: "Review pipeline sources"
   }[type] || "View details";
@@ -207,6 +228,12 @@ function resolvedSignal(type) {
     inactive_pipeline_segment: "Pipeline movement restored",
     response_time_decline: "Response time recovered",
     occupancy_warning: "Occupancy risk resolved",
+    available_room_no_match: "Room demand reviewed",
+    high_intent_no_compatible_room: "Placement path found",
+    vacant_room_revenue_risk: "Vacant room risk addressed",
+    reserved_room_pending_move_in: "Reserved room confirmed",
+    maintenance_room_blocks_occupancy: "Room blocker cleared",
+    room_inventory_occupancy_warning: "Room occupancy recovered",
     conversion_drop_detected: "Conversion risk resolved",
     pipeline_shortfall_risk: "Pipeline shortfall resolved"
   }[type] || "Operational risk resolved";
@@ -310,16 +337,58 @@ async function safeSelect(query, fallback = []) {
 async function loadOperationalData(db, user, locationId = "") {
   const locations = await getAccessibleLocations(db, user, locationId);
   const locationIds = locations.map((location) => location.id);
-  const [leads, tours, followUps, tasks, activityLogs, emails, occupancy] = await Promise.all([
+  const [leads, tours, followUps, tasks, activityLogs, emails, occupancy, rooms, residents, rules] = await Promise.all([
     safeSelect(scopedQuery(db.from("leads_v2").select("*").order("created_at", { ascending: false }).limit(2000), locationIds)),
     safeSelect(scopedQuery(db.from("tours").select("*").order("scheduled_at", { ascending: true }).limit(2000), locationIds)),
     safeSelect(scopedQuery(db.from("follow_ups").select("*").order("due_at", { ascending: true }).limit(2000), locationIds)),
     safeSelect(scopedQuery(db.from("staff_tasks").select("*").order("due_at", { ascending: true }).limit(2000), locationIds)),
     safeSelect(scopedQuery(db.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(4000), locationIds)),
     safeSelect(scopedQuery(db.from("email_history").select("*").order("created_at", { ascending: false }).limit(2000), locationIds)),
-    safeSelect(scopedQuery(db.from("occupancy_snapshots").select("*").order("snapshot_date", { ascending: false }).limit(500), locationIds))
+    safeSelect(scopedQuery(db.from("occupancy_snapshots").select("*").order("snapshot_date", { ascending: false }).limit(500), locationIds)),
+    safeSelect(scopedQuery(db.from("rooms_v2").select("*").order("room_number", { ascending: true }).limit(2000), locationIds)),
+    safeSelect(scopedQuery(db.from("residents_v2").select("*").order("created_at", { ascending: false }).limit(2000), locationIds)),
+    safeSelect(db.from("intelligence_rules").select("*").order("event_type", { ascending: true }).limit(200))
   ]);
-  return { locations, locationIds, leads, tours, followUps, tasks, activityLogs, emails, occupancy };
+  return { locations, locationIds, leads, tours, followUps, tasks, activityLogs, emails, occupancy, rooms, residents, rules: buildRuleMap(rules) };
+}
+
+function buildRuleMap(rows = []) {
+  return rows.reduce((map, row) => {
+    map[row.event_type] = {
+      enabled: row.enabled !== false,
+      severity: row.severity || "medium",
+      thresholdHours: Number.isFinite(Number(row.threshold_hours)) ? Number(row.threshold_hours) : null,
+      cooldownHours: Number(row.cooldown_hours || 24),
+      settings: row.settings || {}
+    };
+    return map;
+  }, {});
+}
+
+function ruleConfig(data, type, fallback = {}) {
+  const rule = data.rules?.[type];
+  if (!rule) return { enabled: true, severity: fallback.severity || "medium", thresholdHours: fallback.thresholdHours ?? null, cooldownHours: 24, settings: fallback.settings || {} };
+  return {
+    ...rule,
+    settings: { ...(fallback.settings || {}), ...(rule.settings || {}) }
+  };
+}
+
+function applyRuleConfiguration(data, events = []) {
+  return events
+    .filter((event) => ruleConfig(data, event.event_type || event.type).enabled !== false)
+    .map((event) => {
+      const rule = ruleConfig(data, event.event_type || event.type);
+      return {
+        ...event,
+        severity: rule.severity || event.severity,
+        metadata: {
+          ...(event.metadata || {}),
+          rule_configured: Boolean(data.rules?.[event.event_type || event.type]),
+          cooldown_hours: rule.cooldownHours
+        }
+      };
+    });
 }
 
 function groupBy(rows, key) {
@@ -367,8 +436,21 @@ function evaluateOperationalRules(data) {
   const locationsById = new Map(data.locations.map((location) => [location.id, location]));
   const leadsByLocation = groupBy(data.leads, "location_id");
   const activeLeads = data.leads.filter((lead) => !["move_in", "archived"].includes(clean(lead.status)));
-  const openFollowUps = data.followUps.filter((item) => !["completed", "archived"].includes(clean(item.status)));
+  const openFollowUps = data.followUps.filter((item) => !INACTIVE_FOLLOW_UP_STATUSES.has(clean(item.status)));
   const now = new Date();
+  const leadStaleRule = ruleConfig(data, "lead_stale", { settings: { stale_days: 7 } });
+  const staleDaysThreshold = Number(leadStaleRule.settings.stale_days || 7);
+  const hotLeadRule = ruleConfig(data, "high_intent_lead_uncontacted", { thresholdHours: 2, settings: { min_score: 70 } });
+  const hotLeadMinScore = Number(hotLeadRule.settings.min_score || 70);
+  const hotLeadHours = Number(hotLeadRule.thresholdHours ?? 2);
+  const recoveryRule = ruleConfig(data, "recovery_opportunity_detected", { settings: { min_score: 35 } });
+  const recoveryMinScore = Number(recoveryRule.settings.min_score || 35);
+  const tourRule = ruleConfig(data, "tour_no_show_risk", { settings: { tour_window_hours: 24 } });
+  const tourWindowHours = Number(tourRule.settings.tour_window_hours || 24);
+  const inactiveRule = ruleConfig(data, "inactive_pipeline_segment", { settings: { inactive_days: 7 } });
+  const inactiveDays = Number(inactiveRule.settings.inactive_days || 7);
+  const occupancyRule = ruleConfig(data, "occupancy_warning", { settings: { target_occupancy: 0.85 } });
+  const occupancyTarget = Number(occupancyRule.settings.target_occupancy || 0.85);
 
   for (const [locationId, followUps] of groupBy(openFollowUps.filter((item) => item.due_at && new Date(item.due_at) < now), "location_id")) {
     const locationName = displayLocationName(locationsById, locationId);
@@ -389,7 +471,7 @@ function evaluateOperationalRules(data) {
     const lastTouch = lastLeadTouchAt(lead, data);
     const staleDays = daysBetween(lastTouch || lead.created_at);
     const locationName = displayLocationName(locationsById, lead.location_id);
-    if (staleDays >= 7) {
+    if (staleDays >= staleDaysThreshold) {
       events.push(buildEvent({
         type: "lead_stale",
         severity: temperature === "hot" ? "high" : "medium",
@@ -402,7 +484,7 @@ function evaluateOperationalRules(data) {
         metadata: { lead_id: lead.id, score, temperature, last_touch_at: lastTouch, location_name: locationName }
       }));
     }
-    if (score >= 70 && clean(lead.status) === "new" && hoursBetween(lead.created_at) >= 2) {
+    if (score >= hotLeadMinScore && clean(lead.status) === "new" && hoursBetween(lead.created_at) >= hotLeadHours) {
       events.push(buildEvent({
         type: "high_intent_lead_uncontacted",
         severity: "high",
@@ -415,7 +497,7 @@ function evaluateOperationalRules(data) {
         metadata: { lead_id: lead.id, score, temperature, hours_open: Math.round(hoursBetween(lead.created_at)) }
       }));
     }
-    if (staleDays >= 7 && score >= 35 && (lead.email || lead.phone)) {
+    if (staleDays >= staleDaysThreshold && score >= recoveryMinScore && (lead.email || lead.phone)) {
       events.push(buildEvent({
         type: "recovery_opportunity_detected",
         severity: score >= 70 ? "high" : "medium",
@@ -432,7 +514,7 @@ function evaluateOperationalRules(data) {
 
   for (const tour of data.tours.filter((item) => clean(item.status) === "scheduled")) {
     const untilTour = hoursBetween(now, new Date(tour.scheduled_at));
-    if (untilTour >= 0 && untilTour <= 24) {
+    if (untilTour >= 0 && untilTour <= tourWindowHours) {
       const confirmations = data.activityLogs.filter((row) => (
         row.location_id === tour.location_id &&
         ((row.entity_type === "tour" && row.entity_id === tour.id) || (row.entity_type === "lead" && row.entity_id === tour.lead_id)) &&
@@ -462,7 +544,7 @@ function evaluateOperationalRules(data) {
       ...activeRows.map((lead) => lead.updated_at || lead.created_at),
       ...data.activityLogs.filter((row) => row.location_id === location.id && /status|lead|tour|follow/i.test(row.action || "")).map((row) => row.created_at)
     );
-    if (activeRows.length && (!latestMovement || daysBetween(latestMovement) >= 7)) {
+    if (activeRows.length && (!latestMovement || daysBetween(latestMovement) >= inactiveDays)) {
       events.push(buildEvent({
         type: "inactive_pipeline_segment",
         severity: "medium",
@@ -513,7 +595,7 @@ function evaluateOperationalRules(data) {
     const occupied = Number(latest?.occupied_count || 0);
     if (capacity > 0) {
       const occupancyRate = occupied / capacity;
-      const target = Number(latest?.metadata?.target_occupancy || 0.85);
+      const target = Number(latest?.metadata?.target_occupancy || occupancyTarget);
       if (occupancyRate < target) {
         events.push(buildEvent({
           type: "occupancy_warning",
@@ -528,8 +610,163 @@ function evaluateOperationalRules(data) {
     }
   }
 
+  events.push(...evaluateRoomInventoryRules(data, locationsById));
   events.push(...evaluatePredictiveRules(data, locationsById));
-  return dedupeEvents(events);
+  return applyRuleConfiguration(data, dedupeEvents(events));
+}
+
+function evaluateRoomInventoryRules(data, locationsById) {
+  const events = [];
+  const activeLeads = data.leads.filter((lead) => !["move_in", "archived"].includes(clean(lead.status).toLowerCase()));
+  const matches = buildRoomLeadMatchesForIntelligence(data.rooms || [], activeLeads, { limit: 200 });
+  const matchesByRoom = new Set(matches.map((match) => match.roomId));
+  const matchesByLead = new Set(matches.map((match) => match.leadId));
+  const roomsByLocation = groupBy(data.rooms || [], "location_id");
+
+  for (const room of data.rooms || []) {
+    const status = roomStatus(room);
+    const condition = clean(room.condition).toLowerCase();
+    const roomNumber = room.room_number || room.room_name || "unassigned";
+    if (status === "available" && !matchesByRoom.has(room.id)) {
+      events.push(buildEvent({
+        type: "available_room_no_match",
+        severity: "medium",
+        locationId: room.location_id,
+        title: `Room ${roomNumber} has no matching lead`,
+        description: "Available inventory has no compatible active lead by location, care type, budget, and timing.",
+        recommendation: "Review marketing sources or alternate lead segments for this room.",
+        entityType: "room",
+        entityId: room.id,
+        metadata: { room_id: room.id, room_number: roomNumber, room_status: status }
+      }));
+    }
+    if (status === "reserved") {
+      events.push(buildEvent({
+        type: "reserved_room_pending_move_in",
+        severity: "medium",
+        locationId: room.location_id,
+        title: `Room ${roomNumber} is reserved`,
+        description: "A reserved room still needs a confirmed move-in path.",
+        recommendation: "Confirm paperwork, move-in date, room readiness, and family next step.",
+        entityType: "room",
+        entityId: room.id,
+        metadata: { room_id: room.id, room_number: roomNumber, reserved_for_lead_id: room.reserved_for_lead_id || "" }
+      }));
+    }
+    if (["maintenance", "offline"].includes(status) || ["maintenance", "damaged", "needs_cleaning"].includes(condition)) {
+      events.push(buildEvent({
+        type: "maintenance_room_blocks_occupancy",
+        severity: status === "offline" ? "high" : "medium",
+        locationId: room.location_id,
+        title: `Room ${roomNumber} blocks occupancy`,
+        description: `Room status is ${status}${condition ? ` and condition is ${condition}` : ""}.`,
+        recommendation: condition === "needs_cleaning" ? "Assign housekeeping turnover and update room status." : "Assign maintenance and set target ready time.",
+        entityType: "room",
+        entityId: room.id,
+        metadata: { room_id: room.id, room_number: roomNumber, room_status: status, condition }
+      }));
+    }
+  }
+
+  activeLeads.filter((lead) => estimateLeadScore(lead) >= 55).forEach((lead) => {
+    if (!matchesByLead.has(lead.id)) {
+      events.push(buildEvent({
+        type: "high_intent_no_compatible_room",
+        severity: "high",
+        locationId: lead.location_id,
+        title: `${lead.full_name || "High-intent lead"} has no compatible room`,
+        description: "A high-intent family does not currently match an available room.",
+        recommendation: "Review alternate locations, budget fit, care fit, or room readiness blockers.",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: { lead_id: lead.id, score: estimateLeadScore(lead), care_type: lead.care_type || "" }
+      }));
+    }
+  });
+
+  for (const [locationId, rooms] of roomsByLocation) {
+    const revenueRooms = rooms.filter((room) => roomStatus(room) !== "offline");
+    const occupied = rooms.filter((room) => roomStatus(room) === "occupied").length;
+    const available = rooms.filter((room) => roomStatus(room) === "available");
+    const lostRevenue = available.reduce((sum, room) => sum + roomRevenue(room), 0);
+    if (lostRevenue > 0) {
+      events.push(buildEvent({
+        type: "vacant_room_revenue_risk",
+        severity: lostRevenue >= 13000 ? "high" : "medium",
+        locationId,
+        title: "Vacant room revenue risk",
+        description: `${displayLocationName(locationsById, locationId)} has ${formatCurrency(lostRevenue)} in estimated monthly vacant-room risk.`,
+        recommendation: "Prioritize compatible leads against available rooms.",
+        metadata: { available_rooms: available.length, lost_revenue: lostRevenue }
+      }));
+    }
+    if (revenueRooms.length) {
+      const occupancyRate = occupied / revenueRooms.length;
+      if (occupancyRate < 0.85) {
+        events.push(buildEvent({
+          type: "room_inventory_occupancy_warning",
+          severity: occupancyRate < 0.75 ? "high" : "medium",
+          locationId,
+          title: "Room inventory occupancy below target",
+          description: `${displayLocationName(locationsById, locationId)} is at ${Math.round(occupancyRate * 100)}% room-based occupancy.`,
+          recommendation: "Use room matches and Daily Operating Plan actions to recover occupancy.",
+          metadata: { occupied_count: occupied, capacity: revenueRooms.length, occupancy_rate: occupancyRate, target: 0.85 }
+        }));
+      }
+    }
+  }
+
+  return events;
+}
+
+function buildRoomLeadMatchesForIntelligence(rooms = [], leads = [], options = {}) {
+  const limit = options.limit || 100;
+  return rooms
+    .filter((room) => roomStatus(room) === "available")
+    .flatMap((room) => leads.map((lead) => scoreRoomLeadFitForIntelligence(room, lead)))
+    .filter((match) => match.score >= 35)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+function scoreRoomLeadFitForIntelligence(room = {}, lead = {}) {
+  let score = 0;
+  if (room.location_id === lead.location_id) score += 30;
+  const leadCare = normalizeMatchText(lead.care_type || "");
+  const roomCare = normalizeMatchText(room.care_level_supported || room.care_level || "");
+  if (!roomCare || !leadCare || roomCare.includes(leadCare) || leadCare.includes(roomCare)) score += 25;
+  const budget = inferLeadBudgetForIntelligence(lead);
+  const min = Number(room.budget_min || 0);
+  const max = Number(room.budget_max || room.monthly_rate || 0);
+  const rate = Number(room.monthly_rate || 0);
+  if (!budget || (!min && !max && !rate) || (budget >= (min || 0) && budget <= (max || rate || budget))) score += 20;
+  const timeline = normalizeMatchText(lead.move_timeline || "");
+  if (timeline.includes("asap") || timeline.includes("immediate") || timeline.includes("30")) score += 15;
+  if (estimateLeadScore(lead) >= 55) score += 10;
+  if (room.location_id !== lead.location_id) score = Math.min(score, 45);
+  return { roomId: room.id, leadId: lead.id, locationId: room.location_id, score };
+}
+
+function roomStatus(room = {}) {
+  return clean(room.current_status || room.status || "available").toLowerCase();
+}
+
+function roomRevenue(room = {}) {
+  return Number(room.monthly_rate || room.budget_min || room.budget_max || 6500) || 6500;
+}
+
+function normalizeMatchText(value = "") {
+  return clean(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function inferLeadBudgetForIntelligence(lead = {}) {
+  const text = `${lead.payment_type || ""} ${lead.notes_summary || ""} ${lead.current_situation || ""}`;
+  const match = text.match(/\$?\s*(\d{4,5})/);
+  return match ? Number(match[1]) : 0;
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0);
 }
 
 function evaluatePredictiveRules(data, locationsById) {
@@ -1131,7 +1368,16 @@ async function listIntelligence(db, user, locationId = "") {
     const { data: persisted, error } = await query;
     if (error) throw error;
     if (persisted?.length) {
-      events = persisted.map(enrichEvent);
+      const computedByKey = new Map(computedEvents.map((event) => [event.dedupe_key, event]));
+      const currentPersisted = persisted
+        .map(enrichEvent)
+        .filter((event) => computedByKey.has(event.dedupe_key));
+      const persistedKeys = new Set(currentPersisted.map((event) => event.dedupe_key));
+      const newTransient = computedEvents
+        .filter((event) => !persistedKeys.has(event.dedupe_key))
+        .map((event) => ({ ...event, transient: true }));
+      events = [...currentPersisted, ...newTransient]
+        .sort((a, b) => eventPriority(b) - eventPriority(a) || new Date(b.detected_at || b.created_at) - new Date(a.detected_at || a.created_at));
       mode = "persisted";
     }
     const { data: runs, error: runError } = await db.from("operational_event_runs").select("*").order("started_at", { ascending: false }).limit(1);

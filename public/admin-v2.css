@@ -4935,6 +4935,50 @@ td small {
   overflow: hidden;
 }
 
+.report-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.report-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+  min-width: 0;
+  padding: 0.35rem 0;
+}
+
+.report-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+.report-value {
+  min-width: 2.75rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.report-track {
+  grid-column: 1 / -1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.report-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-strong), var(--gold));
+}
+
 .bar {
   display: grid;
   grid-template-columns: minmax(9rem, 1.15fr) minmax(5rem, 1fr) minmax(3.5rem, auto);
