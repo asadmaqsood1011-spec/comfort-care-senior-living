@@ -630,7 +630,9 @@ function handleRealtimeChange(keys) {
 async function silentRefresh() {
   if (!app.session || document.hidden) return;
   const tasks = [];
-  const maybeLoad = (key, fn, ttl = 55000) => { if (!isFresh(key, ttl)) tasks.push(fn()); };
+  const maybeLoad = (key, fn, ttl = 55000) => {
+    if (!isFresh(key, ttl)) tasks.push(runRefreshTask(key, fn));
+  };
   maybeLoad("intelligence", loadIntelligence);
   maybeLoad("operations", loadOperations);
   if (app.activeView === "dashboard") {
@@ -653,6 +655,21 @@ async function silentRefresh() {
   if (app.activeView === "rooms") maybeLoad("roomIntelligence", () => loadRoomIntelligence().catch(() => {}));
   if (["tours", "operations"].includes(app.activeView)) maybeLoad("integrations", () => loadIntegrations().catch(() => {}));
   if (tasks.length) try { await Promise.all(tasks); } catch (_) {}
+}
+
+async function runRefreshTask(label, task, timeoutMs = 20000) {
+  let timeoutId = null;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${label} refresh timed out.`)), timeoutMs);
+  });
+  try {
+    await Promise.race([Promise.resolve().then(task), timeout]);
+    return { label, ok: true };
+  } catch (reason) {
+    return { label, ok: false, reason };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function refreshAll() {
@@ -681,15 +698,13 @@ async function refreshAll() {
   ];
   let failed = [];
   try {
-    const results = await Promise.allSettled(tasks.map(([, task]) => task()));
-    failed = results
-      .map((result, index) => result.status === "rejected" ? { label: tasks[index][0], reason: result.reason } : null)
-      .filter(Boolean);
+    const results = await Promise.all(tasks.map(([label, task]) => runRefreshTask(label, task)));
+    failed = results.filter((result) => !result.ok);
     if (failed.length === tasks.length) {
       const message = failed[0]?.reason?.message || "Unable to load dashboard data.";
       throw new Error(message);
     }
-    if (app.activeView === "checkins") await loadCheckIns();
+    if (app.activeView === "checkins") await runRefreshTask("check-ins", loadCheckIns);
   } finally {
     if (refreshBtn) { delete refreshBtn.dataset.loading; refreshBtn.disabled = false; }
   }
