@@ -567,17 +567,23 @@ async function loadSession() {
   const initialView = viewFromHash();
   if (initialView && initialView !== app.activeView) setView(initialView, { updateHash: false });
   showApp();
-  refreshAll()
-    .then(startBackgroundLoops)
-    .catch((err) => setStatus(err.message || "Unable to load dashboard data.", true));
+  try {
+    await refreshAll();
+  } catch (err) {
+    setStatus(err.message || "Unable to load dashboard data.", true);
+  } finally {
+    startBackgroundLoops();
+  }
 }
 
 let _realtimeChannel = null;
+let _liveRefreshEventsBound = false;
 
 function startBackgroundLoops() {
   stopBackgroundLoops();
   coordinationTicker = setInterval(renderCoordinationStrip, 30_000);
-  silentRefreshTimer = setInterval(silentRefresh, 60_000);
+  silentRefreshTimer = setInterval(silentRefresh, 30_000);
+  bindLiveRefreshEvents();
   bindRealtimeSubscriptions();
 }
 
@@ -594,11 +600,31 @@ function bindRealtimeSubscriptions() {
   if (_realtimeChannel) { try { app.supabase.removeChannel(_realtimeChannel); } catch (_) {} }
   _realtimeChannel = app.supabase
     .channel("admin-v2-realtime")
-    .on("postgres_changes", { event: "*", schema: "public", table: "leads_v2" }, () => { invalidate("leads"); if (app.activeView === "leads") loadLeads().catch(() => {}); })
-    .on("postgres_changes", { event: "*", schema: "public", table: "tours" }, () => { invalidate("operations"); if (["dashboard", "operations"].includes(app.activeView)) loadOperations().catch(() => {}); })
-    .on("postgres_changes", { event: "*", schema: "public", table: "follow_ups" }, () => { invalidate("operations"); if (["dashboard", "operations"].includes(app.activeView)) loadOperations().catch(() => {}); })
-    .on("postgres_changes", { event: "*", schema: "public", table: "activity_logs" }, () => { invalidate("intelligence"); if (app.activeView === "activity") loadIntelligence().catch(() => {}); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "leads_v2" }, () => handleRealtimeChange(["leads", "dashboard", "operatingPlan", "intelligence", "revenueCommand", "scopeControl"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "rooms_v2" }, () => handleRealtimeChange(["operations", "roomIntelligence", "dashboard", "operatingPlan", "revenueCommand", "scopeControl"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "residents_v2" }, () => handleRealtimeChange(["operations", "dashboard", "roomIntelligence", "revenueCommand"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "tours" }, () => handleRealtimeChange(["operations", "dashboard", "operatingPlan", "intelligence"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "follow_ups" }, () => handleRealtimeChange(["operations", "dashboard", "operatingPlan", "intelligence"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "operating_plan_items" }, () => handleRealtimeChange(["operatingPlan", "dashboard"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "operational_events" }, () => handleRealtimeChange(["intelligence", "dashboard", "scopeControl"]))
+    .on("postgres_changes", { event: "*", schema: "public", table: "activity_logs" }, () => handleRealtimeChange(["intelligence", "dashboard"]))
     .subscribe();
+}
+
+function bindLiveRefreshEvents() {
+  if (_liveRefreshEventsBound) return;
+  _liveRefreshEventsBound = true;
+  window.addEventListener("focus", () => {
+    silentRefresh().catch(() => {});
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshAll().catch(() => {});
+  });
+}
+
+function handleRealtimeChange(keys) {
+  keys.forEach(invalidate);
+  if (!document.hidden) silentRefresh().catch(() => {});
 }
 
 async function silentRefresh() {
@@ -635,13 +661,44 @@ async function refreshAll() {
   const refreshBtn = $("[data-refresh]");
   if (refreshBtn) { refreshBtn.dataset.loading = "true"; refreshBtn.disabled = true; }
   setStatus("Refreshing...");
+  const tasks = [
+    ["dashboard", loadDashboard],
+    ["operating plan", loadOperatingPlan],
+    ["intelligence", loadIntelligence],
+    ["leads", loadLeads],
+    ["operations", loadOperations],
+    ["workflows", () => loadWorkflows()],
+    ["escalations", () => loadEscalations()],
+    ["placement desk", () => loadPlacementDesk()],
+    ["room intelligence", () => loadRoomIntelligence()],
+    ["revenue command", () => loadRevenueCommand()],
+    ["forecast", loadForecast],
+    ["referral ROI", loadReferralRoi],
+    ["referral partners", () => loadReferralPartners()],
+    ["integrations", () => loadIntegrations()],
+    ["outreach history", () => loadOutreachHistory()],
+    ["scope control", () => loadScopeControl()]
+  ];
+  let failed = [];
   try {
-    await Promise.all([loadDashboard(), loadOperatingPlan(), loadIntelligence(), loadLeads(), loadOperations(), loadWorkflows().catch(() => {}), loadEscalations().catch(() => {}), loadPlacementDesk().catch(() => {}), loadRoomIntelligence().catch(() => {}), loadRevenueCommand().catch(() => {}), loadForecast(), loadReferralRoi(), loadReferralPartners().catch(() => {}), loadIntegrations().catch(() => {}), loadOutreachHistory().catch(() => {}), loadScopeControl().catch(() => {})]);
+    const results = await Promise.allSettled(tasks.map(([, task]) => task()));
+    failed = results
+      .map((result, index) => result.status === "rejected" ? { label: tasks[index][0], reason: result.reason } : null)
+      .filter(Boolean);
+    if (failed.length === tasks.length) {
+      const message = failed[0]?.reason?.message || "Unable to load dashboard data.";
+      throw new Error(message);
+    }
     if (app.activeView === "checkins") await loadCheckIns();
   } finally {
     if (refreshBtn) { delete refreshBtn.dataset.loading; refreshBtn.disabled = false; }
   }
-  setStatus("");
+  if (failed.length) {
+    console.warn("Admin-v2 refresh skipped panels:", failed.map((item) => `${item.label}: ${item.reason?.message || item.reason}`).join("; "));
+    setStatus(`Data refreshed. ${failed.length} panel${failed.length === 1 ? "" : "s"} need attention.`, true);
+  } else {
+    setStatus("");
+  }
   iconRefresh();
 }
 
